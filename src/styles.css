@@ -165,7 +165,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .ring-label { font-family: var(--font-num); font-weight: 700; font-size: 1rem; text-align: center; line-height: 1.05; max-width: 64px; }
 .ring.lv-green .ring-label { color: var(--good-ink); }
 .ring.lv-red .ring-label, .ring.lv-critical .ring-label { color: var(--critical); }
-.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+.metrics { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; margin-top: 14px; }
 .metric { --lv: var(--axis); background: var(--surface-2); border-radius: var(--radius-s); padding: 8px 10px; border-bottom: 3px solid var(--lv); min-width: 0; }
 .metric.lv-green { --lv: var(--good); }
 .metric.lv-yellow { --lv: var(--warning); }
