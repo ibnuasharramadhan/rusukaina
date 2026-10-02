@@ -96,6 +96,8 @@ export interface Profile {
   easyCap: number
   raceDate: ISODate
   raceName: string
+  /** Punya tensimeter: tampilkan input & grafik tensi. Default mati. */
+  trackBp: boolean
 }
 
 export interface ExportFile {

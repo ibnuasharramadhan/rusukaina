@@ -70,7 +70,11 @@ export interface Readiness {
   noLoadIncrease: boolean
 }
 
-export function readiness(input: { sys?: number; dia?: number; restingHr?: number; sleepHours?: number; baseline: number }): Readiness {
+/** Tanpa tensimeter: tensi terakhir yang diketahui 148/83 (kuning), jadi batasan kuning tetap berlaku. */
+export const NO_BP_NOTE = 'Tensi belum dipantau (terakhir 148/83): tanpa strides dan beban gym tidak dinaikkan sampai tensi bisa dicek.'
+
+export function readiness(input: { sys?: number; dia?: number; restingHr?: number; sleepHours?: number; baseline: number; trackBp?: boolean }): Readiness {
+  if (input.trackBp === false) return readinessWithoutBp(input)
   const bp = bpVerdict(input.sys, input.dia)
   const hr = restingHrVerdict(input.restingHr, input.baseline)
   const sl = sleepVerdict(input.sleepHours)
@@ -91,6 +95,25 @@ export function readiness(input: { sys?: number; dia?: number; restingHr?: numbe
     canTrain: level === 'green' || level === 'yellow',
     noStrides: bp.level !== 'green',
     noLoadIncrease: bp.level !== 'green',
+  }
+}
+
+function readinessWithoutBp(input: { restingHr?: number; sleepHours?: number; baseline: number }): Readiness {
+  const hr = restingHrVerdict(input.restingHr, input.baseline)
+  const sl = sleepVerdict(input.sleepHours)
+  const level = worst(hr.level, sl.level === 'yellow' ? 'red' : sl.level)
+  const note: Verdict = { level: 'unknown', title: 'Tensi belum dipantau', advice: [NO_BP_NOTE] }
+  const headline =
+    level === 'red' ? (hr.level === 'red' ? hr.title : 'Kurang tidur: jalan kaki atau skip')
+    : level === 'green' ? 'Siap latihan sesuai rencana'
+    : 'Cek HR istirahat & tidur dulu'
+  return {
+    level,
+    headline,
+    verdicts: [hr, sl, note].filter((v) => v.advice.length),
+    canTrain: level === 'green',
+    noStrides: true,
+    noLoadIncrease: true,
   }
 }
 

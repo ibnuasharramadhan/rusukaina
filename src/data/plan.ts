@@ -13,6 +13,7 @@ export const DEFAULT_PROFILE: Profile = {
   easyCap: 145,
   raceDate: '2026-12-05',
   raceName: 'UI Ultra 7K',
+  trackBp: false,
 }
 
 export const PLAN_START: ISODate = '2026-10-01'

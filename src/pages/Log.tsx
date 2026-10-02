@@ -8,7 +8,7 @@ import { formatDate, today } from '../lib/date'
 import { deleteDaily, deleteGym, deleteRun, saveGym, saveRun, uid } from '../lib/db'
 import { formatDuration, formatPace, paceSecPerKm, parseDuration } from '../lib/pace'
 import { href } from '../lib/router'
-import { bpLevel, readiness, runFlags } from '../lib/safety'
+import { NO_BP_NOTE, readiness, runFlags } from '../lib/safety'
 import { useData } from '../lib/store'
 import type { GymLog, GymSet, RunLog, RunType } from '../lib/types'
 import { karvonenZones, zoneFor } from '../lib/zones'
@@ -16,13 +16,14 @@ import { karvonenZones, zoneFor } from '../lib/zones'
 type Tab = 'lari' | 'gym' | 'harian'
 
 export function Log({ params }: { params: URLSearchParams }) {
+  const { profile } = useData()
   const tab = (params.get('tab') as Tab) || 'lari'
   const setTab = (t: Tab) => { location.hash = href('catat', { tab: t }) }
   return (
     <div className="page">
-      <PageHeader eyebrow="Lari, gym, tensi" title="Catat" />
+      <PageHeader eyebrow={profile.trackBp ? 'Lari, gym, tensi' : 'Lari, gym, HR'} title="Catat" />
       <Segmented<Tab> value={tab} onChange={setTab} options={[
-        { value: 'lari', label: 'Lari' }, { value: 'gym', label: 'Gym' }, { value: 'harian', label: 'Tensi & HR' },
+        { value: 'lari', label: 'Lari' }, { value: 'gym', label: 'Gym' }, { value: 'harian', label: profile.trackBp ? 'Tensi & HR' : 'HR & tidur' },
       ]} />
       {tab === 'lari' && <RunSection key={params.toString()} params={params} />}
       {tab === 'gym' && <GymSection key={params.toString()} params={params} />}
@@ -166,7 +167,7 @@ function GymSection({ params }: { params: URLSearchParams }) {
   const [notes, setNotes] = useState(editing?.notes ?? '')
   const saved = params.get('saved') === '1'
   const d = daily.find((x) => x.date === date)
-  const ready = readiness({ sys: d?.sys, dia: d?.dia, restingHr: d?.restingHr, sleepHours: d?.sleepHours, baseline: profile.restingHrBaseline })
+  const ready = readiness({ sys: d?.sys, dia: d?.dia, restingHr: d?.restingHr, sleepHours: d?.sleepHours, baseline: profile.restingHrBaseline, trackBp: profile.trackBp })
 
   const initialSets = useMemo(() => GYM[workout].map((ex): GymSet => {
     const prev = editing?.workout === workout ? editing.exercises.find((e) => e.exercise === ex.name) : undefined
@@ -203,13 +204,14 @@ function GymSection({ params }: { params: URLSearchParams }) {
         {ready.level !== 'unknown' && ready.level !== 'green' && (
           <p className="swap"><LevelBadge level={ready.level} /> {ready.headline}{ready.noLoadIncrease ? '. Jangan naikkan beban hari ini.' : ''}</p>
         )}
+        {!profile.trackBp && <p className="hint">{NO_BP_NOTE}</p>}
         <RestTimer />
         <ol className="exercises">
           {GYM[workout].map((ex, i) => {
             const s = sets[i]
             if (!s) return null
             const hist = lastSetsFor(gym, workout, ex.name, date)
-            const progress = hist.length >= 2 && hist[0].easy && hist[1].easy && bpLevel(d?.sys, d?.dia) === 'green'
+            const progress = hist.length >= 2 && hist[0].easy && hist[1].easy && !ready.noLoadIncrease
             return (
               <li key={ex.name} className={s.setsDone >= ex.sets ? 'complete' : ''}>
                 <div className="ex-h">
@@ -298,7 +300,7 @@ function DailySection({ params }: { params: URLSearchParams }) {
   const [date, setDate] = useState(params.get('date') ?? today())
   return (
     <>
-      <Card title="Tensi, HR istirahat, tidur">
+      <Card title={profile.trackBp ? 'Tensi, HR istirahat, tidur' : 'HR istirahat & tidur'}>
         <Field label="Tanggal"><input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
         <DailyForm key={date} date={date} />
       </Card>
@@ -306,11 +308,11 @@ function DailySection({ params }: { params: URLSearchParams }) {
         {!daily.length && <p className="muted">Belum ada catatan.</p>}
         <ul className="history">
           {[...daily].reverse().map((d) => {
-            const r = readiness({ sys: d.sys, dia: d.dia, restingHr: d.restingHr, sleepHours: d.sleepHours, baseline: profile.restingHrBaseline })
+            const r = readiness({ sys: d.sys, dia: d.dia, restingHr: d.restingHr, sleepHours: d.sleepHours, baseline: profile.restingHrBaseline, trackBp: profile.trackBp })
             return (
               <li key={d.date}>
                 <div className="grow">
-                  <b>{formatDate(d.date, true)}</b> · {d.sys && d.dia ? `${d.sys}/${d.dia}` : '–'} · HR {d.restingHr ?? '–'}
+                  <b>{formatDate(d.date, true)}</b>{profile.trackBp && ` · ${d.sys && d.dia ? `${d.sys}/${d.dia}` : '–'}`} · HR {d.restingHr ?? '–'}
                   {d.sleepHours != null && ` · tidur ${d.sleepHours} j`}
                   <div><LevelBadge level={r.level} /></div>
                 </div>
