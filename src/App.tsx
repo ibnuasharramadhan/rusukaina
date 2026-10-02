@@ -1,3 +1,4 @@
+import { Icon, type IconName } from './components/icons'
 import { UpdatePrompt } from './components/UpdatePrompt'
 import { href, useHashRoute, type Route } from './lib/router'
 import { useData } from './lib/store'
@@ -7,12 +8,12 @@ import { Progress } from './pages/Progress'
 import { Schedule } from './pages/Schedule'
 import { Today } from './pages/Today'
 
-const NAV: { route: Route; label: string; icon: string }[] = [
-  { route: 'hari-ini', label: 'Hari ini', icon: '☀︎' },
-  { route: 'jadwal', label: 'Jadwal', icon: '▦' },
-  { route: 'catat', label: 'Catat', icon: '＋' },
-  { route: 'progres', label: 'Progres', icon: '↗' },
-  { route: 'info', label: 'Info', icon: 'ⓘ' },
+const NAV: { route: Route; label: string; icon: IconName }[] = [
+  { route: 'hari-ini', label: 'Hari ini', icon: 'today' },
+  { route: 'jadwal', label: 'Jadwal', icon: 'calendar' },
+  { route: 'catat', label: 'Catat', icon: 'plus' },
+  { route: 'progres', label: 'Progres', icon: 'trend' },
+  { route: 'info', label: 'Info', icon: 'info' },
 ]
 
 export function App() {
@@ -20,7 +21,7 @@ export function App() {
   const { route, params } = useHashRoute()
   return (
     <div className="app">
-      <main>
+      <main key={route} className="route">
         {!ready ? <div className="page muted">Memuat…</div>
           : route === 'jadwal' ? <Schedule />
           : route === 'catat' ? <Log params={params} />
@@ -30,8 +31,8 @@ export function App() {
       </main>
       <nav className="tabbar" aria-label="Navigasi utama">
         {NAV.map((n) => (
-          <a key={n.route} href={href(n.route)} className={route === n.route ? 'on' : ''} aria-current={route === n.route ? 'page' : undefined}>
-            <span className="ti" aria-hidden>{n.icon}</span>
+          <a key={n.route} href={href(n.route)} className={`${route === n.route ? 'on' : ''} ${n.route === 'catat' ? 'fab' : ''}`} aria-current={route === n.route ? 'page' : undefined}>
+            <span className="ti"><Icon name={n.icon} size={n.route === 'catat' ? 24 : 22} /></span>
             <span>{n.label}</span>
           </a>
         ))}

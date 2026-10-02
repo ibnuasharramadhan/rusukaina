@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { DailyForm } from '../components/DailyForm'
-import { Card, Field, LevelBadge, num, Segmented } from '../components/ui'
+import { Icon } from '../components/icons'
+import { Card, Field, LevelBadge, num, PageHeader, Segmented } from '../components/ui'
 import { GYM, GYM_RULES } from '../data/gym'
 import { sessionOn } from '../data/plan'
 import { formatDate, today } from '../lib/date'
@@ -19,7 +20,7 @@ export function Log({ params }: { params: URLSearchParams }) {
   const setTab = (t: Tab) => { location.hash = href('catat', { tab: t }) }
   return (
     <div className="page">
-      <h1>Catat</h1>
+      <PageHeader eyebrow="Lari, gym, tensi" title="Catat" />
       <Segmented<Tab> value={tab} onChange={setTab} options={[
         { value: 'lari', label: 'Lari' }, { value: 'gym', label: 'Gym' }, { value: 'harian', label: 'Tensi & HR' },
       ]} />
@@ -84,7 +85,7 @@ function RunSection({ params }: { params: URLSearchParams }) {
       <Card title={editing ? 'Ubah lari' : 'Lari baru'}>
         {planned && <p className="muted small">Rencana {formatDate(f.date, true)}: {planned.title}</p>}
         <form className="form" onSubmit={submit}>
-          <div className="row3">
+          <div className="row-when">
             <Field label="Tanggal"><input type="date" value={f.date} onChange={set('date')} required /></Field>
             <Field label="Jam"><input type="time" value={f.time} onChange={set('time')} /></Field>
             <Field label="Jenis">
@@ -107,7 +108,7 @@ function RunSection({ params }: { params: URLSearchParams }) {
           </div>
           <div className="row3">
             <Field label="RPE (1–10)"><input inputMode="numeric" value={f.rpe} onChange={set('rpe')} /></Field>
-            <Field label="Split per km"><input value={f.splits} onChange={set('splits')} placeholder="7:16, 6:46, …" /></Field>
+            <div className="span2"><Field label="Split per km"><input value={f.splits} onChange={set('splits')} placeholder="7:16, 6:46, …" /></Field></div>
           </div>
           <Field label="Catatan"><textarea rows={2} value={f.notes} onChange={set('notes')} placeholder="Rasa napas, cuaca, sepatu…" /></Field>
           {err && <p className="error" role="alert">{err}</p>}
@@ -119,7 +120,7 @@ function RunSection({ params }: { params: URLSearchParams }) {
         {saved && (
           <div className="saved" role="status">
             <b>Tersimpan.</b> {formatPace(paceSecPerKm(saved.distanceKm, saved.durationSec))}/km
-            {runFlags(saved, profile.easyCap).map((x) => <p key={x} className="flag">⚠︎ {x}</p>)}
+            {runFlags(saved, profile.easyCap).map((x) => <p key={x} className="flag"><Icon name="alert" size={16} /> {x}</p>)}
             {!runFlags(saved, profile.easyCap).length && saved.avgHr && <p>HR terjaga di zona easy. Mantap.</p>}
           </div>
         )}

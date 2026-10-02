@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { KIND_ICON } from '../components/ui'
+import { Icon } from '../components/icons'
+import { KindIcon, PageHeader } from '../components/ui'
 import { PRIORITY_NOTE, SCHEDULE, WEEKS } from '../data/plan'
 import { formatDate, today } from '../lib/date'
 import { setMark } from '../lib/db'
@@ -8,7 +9,7 @@ import { statusOf, weekStats } from '../lib/stats'
 import { useData } from '../lib/store'
 import type { SessionStatus } from '../lib/types'
 
-const STATUS_LABEL: Record<SessionStatus, string> = { done: '✓', skipped: '–', swapped: '↺' }
+const STATUS_LABEL: Record<SessionStatus, string> = { done: '', skipped: '–', swapped: '↺' }
 
 export function Schedule() {
   const { runs, gym, marks, refresh } = useData()
@@ -27,8 +28,9 @@ export function Schedule() {
 
   return (
     <div className="page">
-      <h1>Jadwal</h1>
-      <p className="muted">{PRIORITY_NOTE}</p>
+      <PageHeader eyebrow={`Minggu ${current} dari ${WEEKS.length}`} title="Jadwal">
+        <p className="lede">{PRIORITY_NOTE}</p>
+      </PageHeader>
       {WEEKS.map((w) => {
         const st = stats.find((s) => s.no === w.no)!
         const isOpen = open === w.no
@@ -36,13 +38,18 @@ export function Schedule() {
         return (
           <section key={w.no} className={`card week ${w.no === current ? 'current' : ''}`}>
             <button className="week-h" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? 0 : w.no)}>
-              <div>
-                <b>Minggu {w.no}</b> <span className="muted">{formatDate(w.start)} – {formatDate(w.end)}</span>
-                {w.deload && <span className="tag">Deload</span>}
-                {w.no === current && <span className="tag accent">Sekarang</span>}
+              <span className="week-no num">{w.no}</span>
+              <div className="grow">
+                <div>
+                  <b>{formatDate(w.start)} – {formatDate(w.end)}</b>
+                  {w.deload && <span className="tag">Deload</span>}
+                  {w.no === current && <span className="tag accent">Sekarang</span>}
+                </div>
                 <div className="muted small">Long run: {w.longRun}</div>
+                <div className="week-bar" aria-hidden><span style={{ width: `${st.planned ? (st.done / st.planned) * 100 : 0}%` }} /></div>
               </div>
-              <span className="week-prog" aria-label={`${st.done} dari ${st.planned} sesi`}>{st.done}/{st.planned}</span>
+              <span className="week-prog" aria-label={`${st.done} dari ${st.planned} sesi`}><span className="num">{st.done}</span>/{st.planned}</span>
+              <Icon name="chevron" size={16} className={`week-chev ${isOpen ? 'open' : ''}`} />
             </button>
             {isOpen && (
               <>
@@ -54,21 +61,21 @@ export function Schedule() {
                     return (
                       <li key={s.date} className={`${s.date === t ? 'is-today' : ''} ${status ?? ''} ${missed ? 'missed' : ''} k-${s.kind}`}>
                         <span className="d">{formatDate(s.date, true)}</span>
-                        <span className="ico" aria-hidden>{KIND_ICON[s.kind]}</span>
+                        <KindIcon kind={s.kind} size={16} />
                         <span className="grow">
                           {s.title}
                           {s.detail && <span className="muted small block">{s.detail}</span>}
                         </span>
                         {s.kind !== 'rest' && (
                           <button className={`st ${status ?? ''}`} aria-label="Ubah status" onClick={() => setMenu(menu === s.date ? null : s.date)}>
-                            {status ? STATUS_LABEL[status] : missed ? '·' : '○'}
+                            {status === 'done' ? <Icon name="check" size={16} /> : status ? STATUS_LABEL[status] : missed ? '·' : ''}
                           </button>
                         )}
                         {menu === s.date && (
                           <div className="menu" role="menu">
-                            <button onClick={() => mark(s.date, 'done')}>✓ Selesai</button>
-                            <button onClick={() => mark(s.date, 'swapped')}>↺ Diganti jalan/sesi lain</button>
-                            <button onClick={() => mark(s.date, 'skipped')}>– Dilewati</button>
+                            <button onClick={() => mark(s.date, 'done')}>Selesai</button>
+                            <button onClick={() => mark(s.date, 'swapped')}>Diganti jalan/sesi lain</button>
+                            <button onClick={() => mark(s.date, 'skipped')}>Dilewati</button>
                             {(s.kind === 'easy' || s.kind === 'long' || s.kind === 'race') && <a href={href('catat', { tab: 'lari', date: s.date })}>Catat lari…</a>}
                             {(s.kind === 'gymA' || s.kind === 'gymB') && <a href={href('catat', { tab: 'gym', date: s.date, w: s.kind === 'gymA' ? 'A' : 'B' })}>Catat gym…</a>}
                             {markMap.has(s.date) && <button onClick={() => mark(s.date, null)}>Hapus tanda</button>}

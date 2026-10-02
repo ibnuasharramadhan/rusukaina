@@ -1,5 +1,5 @@
 import { BarChart, LineChart } from '../components/charts'
-import { Card, Stat } from '../components/ui'
+import { Card, PageHeader, Stat } from '../components/ui'
 import { weekOf } from '../data/plan'
 import { today } from '../lib/date'
 import { formatPace, metersPerBeat, paceSecPerKm } from '../lib/pace'
@@ -21,7 +21,7 @@ export function Progress() {
 
   return (
     <div className="page">
-      <h1>Progres</h1>
+      <PageHeader eyebrow={currentNo ? `Minggu ${currentNo} dari 10` : 'Ringkasan'} title="Progres" />
       <div className="stats grid4">
         <Stat label="Total jarak" value={`${totalKm.toFixed(1).replace('.', ',')} km`} sub={`${runs.length} lari`} />
         <Stat label="Sesi gym" value={gym.length} />

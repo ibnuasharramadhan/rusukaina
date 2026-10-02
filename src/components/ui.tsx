@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react'
+import { Icon, type IconName } from './icons'
 import type { Level } from '../lib/safety'
 import type { SessionKind } from '../lib/types'
 
-const LEVEL_LABEL: Record<Level, string> = {
+export const LEVEL_LABEL: Record<Level, string> = {
   green: 'Aman', yellow: 'Hati-hati', red: 'Jangan latihan', critical: 'Hubungi dokter', unknown: 'Belum dicek',
 }
 const LEVEL_ICON: Record<Level, string> = { green: '✓', yellow: '!', red: '✕', critical: '✕', unknown: '?' }
@@ -40,8 +41,34 @@ export function Stat({ label, value, sub }: { label: string; value: ReactNode; s
   )
 }
 
-export const KIND_ICON: Record<SessionKind, string> = {
-  gymA: '🏋️', gymB: '🏋️', easy: '🏃', long: '🏃‍♂️', walk: '🚶', rest: '😴', race: '🏁',
+/** Ikon, label pendek, dan warna (kelas CSS k-*) per jenis sesi. */
+export const KIND: Record<SessionKind, { icon: IconName; label: string; tone: 'run' | 'gym' | 'walk' | 'rest' | 'race' }> = {
+  gymA: { icon: 'dumbbell', label: 'Gym A', tone: 'gym' },
+  gymB: { icon: 'dumbbell', label: 'Gym B', tone: 'gym' },
+  easy: { icon: 'route', label: 'Lari easy', tone: 'run' },
+  long: { icon: 'route', label: 'Long run', tone: 'run' },
+  walk: { icon: 'walk', label: 'Jalan', tone: 'walk' },
+  rest: { icon: 'moon', label: 'Pemulihan', tone: 'rest' },
+  race: { icon: 'flag', label: 'Race', tone: 'race' },
+}
+
+export function KindIcon({ kind, size = 18 }: { kind: SessionKind; size?: number }) {
+  return (
+    <span className={`kind-ico t-${KIND[kind].tone}`} aria-hidden>
+      <Icon name={KIND[kind].icon} size={size} />
+    </span>
+  )
+}
+
+/** Judul halaman: label kecil di atas + judul besar. */
+export function PageHeader({ eyebrow, title, children }: { eyebrow?: ReactNode; title: ReactNode; children?: ReactNode }) {
+  return (
+    <header className="page-h">
+      {eyebrow && <p className="eyebrow">{eyebrow}</p>}
+      <h1>{title}</h1>
+      {children}
+    </header>
+  )
 }
 
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Card, Field, num } from '../components/ui'
+import { Card, Field, num, PageHeader } from '../components/ui'
 import { COOLDOWN, GYM, GYM_RULES, WARMUP } from '../data/gym'
 import { downloadBackup } from '../lib/backup'
 import { today } from '../lib/date'
@@ -13,7 +13,7 @@ import { ageOn, karvonenZones, mafHr } from '../lib/zones'
 export function Info() {
   return (
     <div className="page">
-      <h1>Info & pengaturan</h1>
+      <PageHeader eyebrow="Zona, aturan, data" title="Info & pengaturan" />
       <Zones />
       <Safety />
       <GymGuide />

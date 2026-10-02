@@ -25,6 +25,7 @@ Aplikasi web progresif (PWA) untuk menjalankan program latihan 10 minggu menuju 
 - **Vite + React 19 + TypeScript** (strict).
 - **vite-plugin-pwa / Workbox**: manifest, service worker precache, prompt "versi baru tersedia".
 - **IndexedDB** lewat `idb`: data offline-first di perangkat, tanpa backend, tanpa akun.
+- **Font Barlow / Barlow Condensed** di-bundle (tetap tampil offline) dan **ikon SVG sendiri** (`src/components/icons.tsx`), bukan emoji.
 - **Grafik SVG buatan sendiri** (`src/components/charts.tsx`), tanpa library chart: bundel tetap kecil (~90 kB gzip total).
 - **Vitest** + `fake-indexeddb`: 34 tes untuk aturan keamanan, zona HR (dicocokkan dengan tabel di rencana), jadwal, statistik, dan ekspor/impor.
 - Router hash sederhana supaya bisa dihosting di hosting statis mana pun (GitHub Pages, Netlify, Vercel, Cloudflare Pages).
