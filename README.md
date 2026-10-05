@@ -27,7 +27,7 @@ Aplikasi web progresif (PWA) untuk menjalankan program latihan 10 minggu menuju 
 - **IndexedDB** lewat `idb`: data offline-first di perangkat, tanpa backend, tanpa akun.
 - **Font Barlow / Barlow Condensed** di-bundle (tetap tampil offline) dan **ikon SVG sendiri** (`src/components/icons.tsx`), bukan emoji.
 - **Grafik SVG buatan sendiri** (`src/components/charts.tsx`), tanpa library chart: bundel tetap kecil (~90 kB gzip total).
-- **Vitest** + `fake-indexeddb`: 34 tes untuk aturan keamanan, zona HR (dicocokkan dengan tabel di rencana), jadwal, statistik, dan ekspor/impor.
+- **Vitest** + `fake-indexeddb`: 40 tes untuk aturan keamanan, sinkron Strava, zona HR (dicocokkan dengan tabel di rencana), jadwal, statistik, dan ekspor/impor.
 - Router hash sederhana supaya bisa dihosting di hosting statis mana pun (GitHub Pages, Netlify, Vercel, Cloudflare Pages).
 - Mode gelap mengikuti sistem.
 
@@ -65,6 +65,14 @@ Service worker hanya aktif di `npm run preview` atau setelah deploy (butuh HTTPS
 2. Buka URL-nya di HP.
    - **Android/Chrome:** menu ⋮ › *Tambahkan ke layar utama* (atau tombol *Pasang aplikasi* di tab Info).
    - **iPhone/Safari:** tombol Bagikan › *Tambah ke Layar Utama*.
+
+## Sinkron Huawei Health (lewat Strava)
+
+Lari dari jam Huawei masuk otomatis: Huawei Health → Strava → aplikasi. OAuth Strava memakai
+Cloudflare Worker kecil (`worker/`) untuk menukar token, karena `client_secret` tidak boleh ada
+di frontend. Token disimpan di IndexedDB; aktivitas diambil langsung dari Strava API di browser,
+dipetakan ke format log lari (HR, cadence, split per km), dan duplikat dengan catatan manual
+dilewati. Setup: [docs/strava-setup.md](docs/strava-setup.md).
 
 ## Data & sinkron dengan coach
 
