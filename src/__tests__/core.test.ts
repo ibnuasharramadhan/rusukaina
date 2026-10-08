@@ -54,8 +54,10 @@ describe('HR istirahat & tidur', () => {
     expect(restingHrVerdict(65, 58).level).toBe('red')
     expect(readiness({ sys: 125, dia: 80, restingHr: 66, baseline: 58 }).canTrain).toBe(false)
   })
-  it('tidur <6 jam = jalan atau skip', () => {
-    expect(readiness({ sys: 125, dia: 80, restingHr: 58, sleepHours: 5.5, baseline: 58 }).canTrain).toBe(false)
+  it('tidur 5–6 jam = latihan lebih ringan, <5 jam = skip', () => {
+    const short = readiness({ sys: 125, dia: 80, restingHr: 58, sleepHours: 5.5, baseline: 58 })
+    expect(short).toMatchObject({ level: 'yellow', canTrain: true, headline: 'Kurang tidur: latihan lebih ringan' })
+    expect(readiness({ sys: 125, dia: 80, restingHr: 58, sleepHours: 4.5, baseline: 58 }).canTrain).toBe(false)
     expect(readiness({ sys: 125, dia: 80, restingHr: 58, sleepHours: 7, baseline: 58 }).canTrain).toBe(true)
   })
   it('flag lari easy terlalu cepat', () => {
