@@ -9,7 +9,7 @@ import { setMark } from '../lib/db'
 import { formatDuration, formatPace, paceSecPerKm } from '../lib/pace'
 import { href } from '../lib/router'
 import { bpLevel, readiness, restingHrVerdict, runFlags, sleepVerdict, STOP_SIGNS, type Level, type Readiness } from '../lib/safety'
-import { backupDue, raceResult, statusOf } from '../lib/stats'
+import { backupDue, raceResult, runRuleWarnings, statusOf } from '../lib/stats'
 import { useData } from '../lib/store'
 import type { DailyLog, PlannedSession, RunLog } from '../lib/types'
 
@@ -74,7 +74,7 @@ export function Today() {
       )}
 
       {session ? (
-        <TodaySession session={session} easyCap={profile.easyCap} canTrain={r.level === 'unknown' || r.canTrain} noStrides={r.noStrides} status={status} onMark={mark} />
+        <TodaySession session={session} easyCap={profile.easyCap} canTrain={r.level === 'unknown' || r.canTrain} noStrides={r.noStrides} status={status} onMark={mark} ruleWarnings={runRuleWarnings(t, runs)} />
       ) : (
         <Card title="Hari ini">
           <p>{t < PLAN_START ? `Program mulai ${formatDate(PLAN_START)}.` : t > PLAN_END ? 'Program menuju UI Ultra sudah selesai. Saatnya rencana berikutnya bersama coach.' : 'Tidak ada sesi.'}</p>
@@ -204,8 +204,8 @@ function ReadinessCard({ d, r, baseline, onEdit }: { d: DailyLog; r: Readiness; 
   )
 }
 
-function TodaySession({ session, easyCap, canTrain, noStrides, status, onMark }: {
-  session: PlannedSession; easyCap: number; canTrain: boolean; noStrides: boolean; status: string | null; onMark: (s: 'done' | 'skipped' | null) => void
+function TodaySession({ session, easyCap, canTrain, noStrides, status, onMark, ruleWarnings }: {
+  session: PlannedSession; easyCap: number; canTrain: boolean; noStrides: boolean; status: string | null; onMark: (s: 'done' | 'skipped' | null) => void; ruleWarnings: string[]
 }) {
   const isGym = session.kind === 'gymA' || session.kind === 'gymB'
   const isRun = session.kind === 'easy' || session.kind === 'long' || session.kind === 'race'
@@ -227,6 +227,7 @@ function TodaySession({ session, easyCap, canTrain, noStrides, status, onMark }:
       {session.detail && <p className="muted small">{session.detail}</p>}
       {blocked && <p className="swap">Hari ini diganti: <b>jalan santai saja</b>.</p>}
       {canTrain && noStrides && session.strides && <p className="swap">Tensi belum di bawah 140/90: lewati strides, lari easy saja.</p>}
+      {isRun && !status && ruleWarnings.map((w) => <p key={w} className="swap">{w}</p>)}
       {isRun && canTrain && !status && <p className="hint">Easy = masih bisa ngobrol kalimat penuh. Kalau HR lewat {easyCap}, jalan sampai ~130.</p>}
       {status ? (
         <button className="link small" onClick={() => onMark(null)}>Batalkan tanda</button>

@@ -58,7 +58,7 @@ function Safety() {
           <tr><td><span className="badge lv-critical">✕ ≥ 180/110</span></td><td>Jangan latihan, hubungi dokter.</td></tr>
         </tbody>
       </table>
-      <p className="small">HR istirahat naik &gt;7 bpm dari biasanya → ganti jadi jalan santai. Tidur &lt;6 jam → jalan kaki atau skip.</p>
+      <p className="small">HR istirahat naik &gt;7 bpm dari biasanya → ganti jadi jalan santai. Tidur 5–6 jam → gym 1–2 set, lari lebih pendek. Tidur &lt;5 jam → skip, jalan 20'.</p>
       <p className="small"><b>Napas saat angkat beban:</b> hembuskan saat fase berat, tarik saat turun. Jangan menahan napas / mengejan (Valsalva).</p>
       <p className="small"><b>Amlodipin:</b> waspada pusing saat berdiri tiba-tiba dan bengkak pergelangan kaki. Pendinginan bertahap. Jangan ubah dosis sendiri.</p>
       <p className="small"><b>Berhenti & cari pertolongan:</b> {STOP_SIGNS.join('; ').toLowerCase()}.</p>

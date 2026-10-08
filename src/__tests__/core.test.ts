@@ -3,7 +3,7 @@ import { PLAN_END, SCHEDULE, sessionOn, WEEKS } from '../data/plan'
 import { addDays, dayName, mondayOf } from '../lib/date'
 import { formatPace, metersPerBeat, paceSecPerKm, parseDuration } from '../lib/pace'
 import { bpLevel, readiness, restingHrVerdict, runFlags } from '../lib/safety'
-import { adherence, backupDue, coachSummary, raceResult, statusOf, weekStats } from '../lib/stats'
+import { adherence, backupDue, coachSummary, raceResult, runRuleWarnings, statusOf, weekStats } from '../lib/stats'
 import { karvonenZones, mafHr, ageOn } from '../lib/zones'
 import type { RunLog } from '../lib/types'
 
@@ -54,8 +54,10 @@ describe('HR istirahat & tidur', () => {
     expect(restingHrVerdict(65, 58).level).toBe('red')
     expect(readiness({ sys: 125, dia: 80, restingHr: 66, baseline: 58 }).canTrain).toBe(false)
   })
-  it('tidur <6 jam = jalan atau skip', () => {
-    expect(readiness({ sys: 125, dia: 80, restingHr: 58, sleepHours: 5.5, baseline: 58 }).canTrain).toBe(false)
+  it('tidur 5–6 jam = latihan lebih ringan, <5 jam = skip', () => {
+    const short = readiness({ sys: 125, dia: 80, restingHr: 58, sleepHours: 5.5, baseline: 58 })
+    expect(short).toMatchObject({ level: 'yellow', canTrain: true, headline: 'Kurang tidur: latihan lebih ringan' })
+    expect(readiness({ sys: 125, dia: 80, restingHr: 58, sleepHours: 4.5, baseline: 58 }).canTrain).toBe(false)
     expect(readiness({ sys: 125, dia: 80, restingHr: 58, sleepHours: 7, baseline: 58 }).canTrain).toBe(true)
   })
   it('flag lari easy terlalu cepat', () => {
@@ -90,7 +92,7 @@ describe('jadwal', () => {
     expect(dayName('2026-12-05')).toBe('Sabtu')
   })
   it('pola mingguan: Sen Gym A, Rab lari, Kam Gym B, Sab long run', () => {
-    expect(sessionOn('2026-10-12')?.kind).toBe('gymA')
+    expect(sessionOn('2026-10-19')?.kind).toBe('gymA')
     expect(sessionOn('2026-10-14')?.kind).toBe('easy')
     expect(sessionOn('2026-10-15')?.kind).toBe('gymB')
     expect(sessionOn('2026-10-17')?.title).toContain("45'")
@@ -157,5 +159,30 @@ describe('hasil race', () => {
     const runs = [run({ date: '2026-12-05', type: 'outdoor' }), run({ id: 'r', date: '2026-12-05', type: 'race', distanceKm: 7 })]
     expect(raceResult(runs, '2026-12-05')?.id).toBe('r')
     expect(raceResult(runs.slice(0, 1), '2026-12-05')).toBeUndefined()
+  })
+})
+
+describe('revisi jadwal 8 Okt dan aturan lari', () => {
+  const run = (date: string): RunLog => ({ id: date, date, type: 'treadmill', distanceKm: 5, durationSec: 2100, createdAt: 0, updatedAt: 0 })
+
+  it('Jumat–Sabtu libur, Minggu easy, Senin Gym B', () => {
+    expect(sessionOn('2026-10-09')?.kind).toBe('rest')
+    expect(sessionOn('2026-10-10')?.kind).toBe('rest')
+    expect(sessionOn('2026-10-11')).toMatchObject({ kind: 'easy', extraRunOk: true })
+    expect(sessionOn('2026-10-12')?.kind).toBe('gymB')
+    expect(sessionOn('2026-10-17')?.kind).toBe('long')
+  })
+
+  it('peringatan lari berturut-turut, lebih dari 3, dan di hari gym/libur', () => {
+    const runs = ['2026-10-19', '2026-10-21', '2026-10-24'].map(run) // minggu 4
+    expect(runRuleWarnings('2026-10-22', runs).join(' ')).toMatch(/berturut-turut/)
+    expect(runRuleWarnings('2026-10-22', runs).join(' ')).toMatch(/Maks 3/)
+    expect(runRuleWarnings('2026-10-22', runs).join(' ')).toMatch(/bukan lari/)
+    expect(runRuleWarnings('2026-10-24', runs)).toEqual([])
+  })
+
+  it('Minggu 11 Okt boleh jadi lari ke-4', () => {
+    const runs = ['2026-10-05', '2026-10-07', '2026-10-08'].map(run)
+    expect(runRuleWarnings('2026-10-11', runs)).toEqual([])
   })
 })

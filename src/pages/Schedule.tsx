@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Icon } from '../components/icons'
 import { KindIcon, PageHeader } from '../components/ui'
-import { PRIORITY_NOTE, SCHEDULE, WEEKS } from '../data/plan'
+import { PRIORITY_NOTE, RUN_RULES, SCHEDULE, WEEKS } from '../data/plan'
 import { formatDate, today } from '../lib/date'
 import { setMark } from '../lib/db'
 import { href } from '../lib/router'
@@ -30,6 +30,7 @@ export function Schedule() {
     <div className="page">
       <PageHeader eyebrow={`Minggu ${current} dari ${WEEKS.length}`} title="Jadwal">
         <p className="lede">{PRIORITY_NOTE}</p>
+        <p className="lede">{RUN_RULES}</p>
       </PageHeader>
       {WEEKS.map((w) => {
         const st = stats.find((s) => s.no === w.no)!
