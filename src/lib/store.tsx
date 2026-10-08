@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import { DEFAULT_PROFILE } from '../data/plan'
 import * as repo from './db'
+import * as strava from './strava'
 import type { DailyLog, GymLog, Profile, RunLog, SessionMark } from './types'
 
 interface Data {
@@ -11,30 +12,59 @@ interface Data {
   gym: GymLog[]
   marks: SessionMark[]
   lastExportAt?: number
+  /** Status Strava: undefined = belum terhubung. */
+  strava?: strava.StravaAuth
+  stravaMsg: string
+  stravaBusy: boolean
+  syncStrava: () => Promise<void>
   refresh: () => Promise<void>
 }
+
+type State = Omit<Data, 'refresh' | 'syncStrava' | 'stravaMsg' | 'stravaBusy'>
 
 const Ctx = createContext<Data | null>(null)
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<Omit<Data, 'refresh'>>({
+  const [state, setState] = useState<State>({
     ready: false, profile: DEFAULT_PROFILE, runs: [], daily: [], gym: [], marks: [],
   })
+  const [stravaMsg, setStravaMsg] = useState('')
+  const [stravaBusy, setStravaBusy] = useState(false)
 
   const refresh = useCallback(async () => {
-    const [profile, runs, daily, gym, marks, lastExportAt] = await Promise.all([
-      repo.getProfile(), repo.listRuns(), repo.listDaily(), repo.listGym(), repo.listMarks(), repo.getLastExportAt(),
+    const [profile, runs, daily, gym, marks, lastExportAt, stravaAuth] = await Promise.all([
+      repo.getProfile(), repo.listRuns(), repo.listDaily(), repo.listGym(), repo.listMarks(), repo.getLastExportAt(), strava.getStravaAuth(),
     ])
-    setState({ ready: true, profile, runs, daily, gym, marks, lastExportAt })
+    setState({ ready: true, profile, runs, daily, gym, marks, lastExportAt, strava: stravaAuth })
   }, [])
 
-  useEffect(() => {
-    repo.seedIfEmpty().then(refresh)
-    // Minta penyimpanan persisten supaya browser tidak menghapus data saat ruang penuh.
-    navigator.storage?.persist?.().catch(() => {})
+  const syncStrava = useCallback(async () => {
+    setStravaBusy(true)
+    try {
+      const res = await strava.syncStrava(await repo.listRuns())
+      setStravaMsg(res.added ? `${res.added} lari baru dari Strava.` : 'Tidak ada lari baru di Strava.')
+    } catch (e) {
+      setStravaMsg((e as Error).message)
+    } finally {
+      setStravaBusy(false)
+      await refresh()
+    }
   }, [refresh])
 
-  return <Ctx.Provider value={{ ...state, refresh }}>{children}</Ctx.Provider>
+  useEffect(() => {
+    ;(async () => {
+      await repo.seedIfEmpty()
+      const msg = await strava.handleStravaRedirect()
+      if (msg) setStravaMsg(msg)
+      await refresh()
+      // Sinkron otomatis tiap aplikasi dibuka, kalau Strava terhubung dan sedang online.
+      if (strava.stravaConfigured && navigator.onLine && (await strava.getStravaAuth())) await syncStrava()
+    })()
+    // Minta penyimpanan persisten supaya browser tidak menghapus data saat ruang penuh.
+    navigator.storage?.persist?.().catch(() => {})
+  }, [refresh, syncStrava])
+
+  return <Ctx.Provider value={{ ...state, stravaMsg, stravaBusy, syncStrava, refresh }}>{children}</Ctx.Provider>
 }
 
 export function useData(): Data {

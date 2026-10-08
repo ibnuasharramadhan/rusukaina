@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { StravaCard } from '../components/StravaCard'
 import { Card, Field, num, PageHeader } from '../components/ui'
 import { COOLDOWN, GYM, GYM_RULES, WARMUP } from '../data/gym'
 import { downloadBackup } from '../lib/backup'
@@ -14,6 +15,7 @@ export function Info() {
   return (
     <div className="page">
       <PageHeader eyebrow="Zona, aturan, data" title="Info & pengaturan" />
+      <StravaCard />
       <Zones />
       <Safety />
       <GymGuide />

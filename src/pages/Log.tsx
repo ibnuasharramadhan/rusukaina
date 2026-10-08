@@ -36,7 +36,7 @@ export function Log({ params }: { params: URLSearchParams }) {
 // ---------- Lari
 
 function RunSection({ params }: { params: URLSearchParams }) {
-  const { runs, profile, refresh } = useData()
+  const { runs, profile, refresh, strava, stravaBusy, syncStrava } = useData()
   const editing = runs.find((r) => r.id === params.get('id'))
   const initialDate = editing?.date ?? params.get('date') ?? today()
   const planned = sessionOn(initialDate)
@@ -129,7 +129,7 @@ function RunSection({ params }: { params: URLSearchParams }) {
           </div>
         )}
       </Card>
-      <Card title="Riwayat lari">
+      <Card title="Riwayat lari" action={strava ? <button className="link small" onClick={syncStrava} disabled={stravaBusy}>{stravaBusy ? 'Menyinkronkan…' : 'Sinkron Strava'}</button> : undefined}>
         {!runs.length && <p className="muted">Belum ada lari tercatat.</p>}
         <ul className="history">
           {[...runs].reverse().map((r) => (

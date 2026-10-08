@@ -1,0 +1,9 @@
+name = "latihan-strava-token"
+main = "index.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+ALLOWED_ORIGIN = "https://ibnuasharramadhan.github.io"
+# STRAVA_CLIENT_ID dan STRAVA_CLIENT_SECRET diset sebagai secret:
+#   npx wrangler secret put STRAVA_CLIENT_ID
+#   npx wrangler secret put STRAVA_CLIENT_SECRET
