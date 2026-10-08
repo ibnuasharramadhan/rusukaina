@@ -169,14 +169,16 @@ function ProfileForm() {
   const { profile, refresh } = useData()
   const [f, setF] = useState({
     name: profile.name, birthDate: profile.birthDate, rest: String(profile.restingHrBaseline), max: String(profile.maxHr), cap: String(profile.easyCap),
+    trackBp: profile.trackBp,
   })
   const [ok, setOk] = useState(false)
-  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => { setF({ ...f, [k]: e.target.value }); setOk(false) }
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => { setF({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }); setOk(false) }
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     await saveProfile({
       ...profile, name: f.name.trim() || profile.name, birthDate: f.birthDate || profile.birthDate,
       restingHrBaseline: num(f.rest) ?? profile.restingHrBaseline, maxHr: num(f.max) ?? profile.maxHr, easyCap: num(f.cap) ?? profile.easyCap,
+      trackBp: f.trackBp,
     })
     await refresh()
     setOk(true)
@@ -194,6 +196,7 @@ function ProfileForm() {
           <Field label="Batas HR easy"><input inputMode="numeric" value={f.cap} onChange={set('cap')} /></Field>
         </div>
         <p className="hint">Ubah angka ini hanya setelah diskusi dengan coach/dokter. Zona HR dihitung ulang otomatis.</p>
+        <label className="check"><input type="checkbox" checked={f.trackBp} onChange={set('trackBp')} /> Saya punya tensimeter (tampilkan input & grafik tensi)</label>
         <div className="row"><button className="btn primary">Simpan profil</button>{ok && <span role="status">✓ Tersimpan</span>}</div>
       </form>
     </Card>

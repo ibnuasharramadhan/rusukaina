@@ -162,6 +162,21 @@ describe('hasil race', () => {
   })
 })
 
+describe('tanpa tensimeter', () => {
+  it('kesiapan dari HR istirahat & tidur saja, batasan kuning tetap berlaku', () => {
+    const r = readiness({ restingHr: 58, sleepHours: 7, baseline: 58, trackBp: false })
+    expect(r.level).toBe('green')
+    expect(r.canTrain).toBe(true)
+    expect(r.noStrides).toBe(true)
+    expect(r.noLoadIncrease).toBe(true)
+  })
+  it('tensi lama diabaikan, HR tinggi tetap memblok', () => {
+    expect(readiness({ sys: 170, dia: 100, restingHr: 58, baseline: 58, trackBp: false }).canTrain).toBe(true)
+    expect(readiness({ restingHr: 66, baseline: 58, trackBp: false }).canTrain).toBe(false)
+    expect(readiness({ restingHr: 58, sleepHours: 4.5, baseline: 58, trackBp: false }).canTrain).toBe(false)
+  })
+})
+
 describe('revisi jadwal 8 Okt dan aturan lari', () => {
   const run = (date: string): RunLog => ({ id: date, date, type: 'treadmill', distanceKm: 5, durationSec: 2100, createdAt: 0, updatedAt: 0 })
 
@@ -184,5 +199,11 @@ describe('revisi jadwal 8 Okt dan aturan lari', () => {
   it('Minggu 11 Okt boleh jadi lari ke-4', () => {
     const runs = ['2026-10-05', '2026-10-07', '2026-10-08'].map(run)
     expect(runRuleWarnings('2026-10-11', runs)).toEqual([])
+  })
+})
+
+describe('tanpa tensimeter + aturan tidur 3 tingkat', () => {
+  it('tidur 5–6 jam tetap boleh latihan ringan', () => {
+    expect(readiness({ restingHr: 58, sleepHours: 5.5, baseline: 58, trackBp: false })).toMatchObject({ level: 'yellow', canTrain: true })
   })
 })

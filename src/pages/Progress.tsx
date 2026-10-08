@@ -1,7 +1,7 @@
 import { BarChart, LineChart } from '../components/charts'
 import { Card, PageHeader, Stat } from '../components/ui'
 import { weekOf } from '../data/plan'
-import { today } from '../lib/date'
+import { addDays, today } from '../lib/date'
 import { formatPace, metersPerBeat, paceSecPerKm } from '../lib/pace'
 import { adherence, bpAverage, weekStats } from '../lib/stats'
 import { useData } from '../lib/store'
@@ -17,6 +17,8 @@ export function Progress() {
   const totalKm = runs.reduce((a, r) => a + r.distanceKm, 0)
   const { planned, done } = adherence(runs, gym, marks, t)
   const avg7 = bpAverage(daily, 7, t)
+  const hrRows = daily.filter((d) => d.restingHr && d.date >= addDays(t, -6) && d.date <= t)
+  const hr7 = hrRows.length ? Math.round(hrRows.reduce((a, d) => a + d.restingHr!, 0) / hrRows.length) : null
   const withHr = easy.filter((r) => r.avgHr)
 
   return (
@@ -26,10 +28,12 @@ export function Progress() {
         <Stat label="Total jarak" value={`${totalKm.toFixed(1).replace('.', ',')} km`} sub={`${runs.length} lari`} />
         <Stat label="Sesi gym" value={gym.length} />
         <Stat label="Konsistensi" value={planned ? `${Math.round((done / planned) * 100)}%` : '–'} sub={`${done}/${planned} sesi`} />
-        <Stat label="Tensi 7 hari" value={avg7 ? `${avg7.sys}/${avg7.dia}` : '–'} sub={avg7 ? `${avg7.n} pengukuran` : 'belum ada'} />
+        {profile.trackBp
+          ? <Stat label="Tensi 7 hari" value={avg7 ? `${avg7.sys}/${avg7.dia}` : '–'} sub={avg7 ? `${avg7.n} pengukuran` : 'belum ada'} />
+          : <Stat label="HR istirahat 7 hari" value={hr7 ?? '–'} sub={hr7 ? `batas ${profile.restingHrBaseline + 7}` : 'belum ada'} />}
       </div>
 
-      <Card title="Tekanan darah (pagi)">
+      {profile.trackBp && <Card title="Tekanan darah (pagi)">
         <p className="muted small">Target dokter umumnya &lt;130–140. Garis 140 = batas kuning, 160 = jangan latihan.</p>
         <LineChart
           series={[
@@ -39,7 +43,7 @@ export function Progress() {
           refs={[{ y: 140, label: '140', tone: 'warn' }, { y: 160, label: '160', tone: 'bad' }, { y: 90, label: '90', tone: 'warn' }]}
           empty="Catat tensi di tab Catat › Tensi & HR."
         />
-      </Card>
+      </Card>}
 
       <Card title="HR istirahat">
         <p className="muted small">Naik ≥{profile.restingHrBaseline + 7} = kurang pulih. Turun pelan-pelan = jantung makin efisien.</p>

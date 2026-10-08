@@ -20,7 +20,7 @@ export function Today() {
   const t = today()
   const d = daily.find((x) => x.date === t)
   const [editing, setEditing] = useState(false)
-  const r = readiness({ sys: d?.sys, dia: d?.dia, restingHr: d?.restingHr, sleepHours: d?.sleepHours, baseline: profile.restingHrBaseline })
+  const r = readiness({ sys: d?.sys, dia: d?.dia, restingHr: d?.restingHr, sleepHours: d?.sleepHours, baseline: profile.restingHrBaseline, trackBp: profile.trackBp })
   const session = sessionOn(t)
   const week = weekOf(t)
   const daysToRace = diffDays(t, profile.raceDate)
@@ -70,7 +70,7 @@ export function Today() {
           <DailyForm date={t} compact onSaved={() => setEditing(false)} />
         </Card>
       ) : (
-        <ReadinessCard d={d} r={r} baseline={profile.restingHrBaseline} onEdit={() => setEditing(true)} />
+        <ReadinessCard d={d} r={r} baseline={profile.restingHrBaseline} trackBp={profile.trackBp} onEdit={() => setEditing(true)} />
       )}
 
       {session ? (
@@ -149,7 +149,7 @@ function BigStat({ value, unit, tone }: { value: React.ReactNode; unit: string; 
   )
 }
 
-/** Cincin 3 bagian: tensi, HR istirahat, tidur. Tiap bagian berwarna sesuai statusnya sendiri. */
+/** Cincin 2–3 bagian: (tensi), HR istirahat, tidur. Tiap bagian berwarna sesuai statusnya sendiri. */
 function ReadinessRing({ levels, overall }: { levels: Level[]; overall: Level }) {
   const R = 40
   const C = 2 * Math.PI * R
@@ -169,19 +169,19 @@ function ReadinessRing({ levels, overall }: { levels: Level[]; overall: Level })
   )
 }
 
-function ReadinessCard({ d, r, baseline, onEdit }: { d: DailyLog; r: Readiness; baseline: number; onEdit: () => void }) {
+function ReadinessCard({ d, r, baseline, trackBp, onEdit }: { d: DailyLog; r: Readiness; baseline: number; trackBp: boolean; onEdit: () => void }) {
   const bp = bpLevel(d.sys, d.dia)
   const hr = restingHrVerdict(d.restingHr, baseline).level
   const sl = sleepVerdict(d.sleepHours).level
   const metrics: { label: string; icon: 'drop' | 'heart' | 'bed'; value: string; level: Level }[] = [
-    { label: 'Tensi', icon: 'drop', value: d.sys && d.dia ? `${d.sys}/${d.dia}` : '–', level: bp },
+    ...(trackBp ? [{ label: 'Tensi', icon: 'drop' as const, value: d.sys && d.dia ? `${d.sys}/${d.dia}` : '–', level: bp }] : []),
     { label: 'HR istirahat', icon: 'heart', value: d.restingHr ? String(d.restingHr) : '–', level: hr },
     { label: 'Tidur', icon: 'bed', value: d.sleepHours != null ? `${km(d.sleepHours)} j` : '–', level: sl },
   ]
   return (
     <section className={`card ready lv-${r.level}`} aria-label="Kesiapan latihan">
       <div className="ready-top">
-        <ReadinessRing levels={[bp, hr, sl]} overall={r.level} />
+        <ReadinessRing levels={metrics.map((m) => m.level)} overall={r.level} />
         <div className="grow">
           <p className="eyebrow">Kesiapan hari ini</p>
           <h2 className="ready-title">{r.headline}</h2>
@@ -226,7 +226,7 @@ function TodaySession({ session, easyCap, canTrain, noStrides, status, onMark, r
       )}
       {session.detail && <p className="muted small">{session.detail}</p>}
       {blocked && <p className="swap">Hari ini diganti: <b>jalan santai saja</b>.</p>}
-      {canTrain && noStrides && session.strides && <p className="swap">Tensi belum di bawah 140/90: lewati strides, lari easy saja.</p>}
+      {canTrain && noStrides && session.strides && <p className="swap">Tensi belum terpantau di bawah 140/90: lewati strides, lari easy saja.</p>}
       {isRun && !status && ruleWarnings.map((w) => <p key={w} className="swap">{w}</p>)}
       {isRun && canTrain && !status && <p className="hint">Easy = masih bisa ngobrol kalimat penuh. Kalau HR lewat {easyCap}, jalan sampai ~130.</p>}
       {status ? (
