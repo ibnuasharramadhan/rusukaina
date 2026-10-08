@@ -13,6 +13,8 @@ export interface PlannedSession {
   km?: number
   /** Ada strides di sesi ini (dilarang saat tensi kuning). */
   strides?: number
+  /** Pengecualian yang disetujui coach untuk batas 3 lari/minggu. */
+  extraRunOk?: boolean
 }
 
 export interface PlanWeek {

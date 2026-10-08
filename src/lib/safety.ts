@@ -56,7 +56,8 @@ export function restingHrVerdict(hr: number | undefined, baseline: number): Verd
 
 export function sleepVerdict(hours?: number): Verdict {
   if (hours == null) return { level: 'unknown', title: 'Tidur belum dicatat', advice: [] }
-  if (hours < 6) return { level: 'yellow', title: 'Kurang tidur', advice: [`Tidur ${hours} jam (<6). Ganti sesi jadi jalan kaki atau skip. Tidak apa-apa.`] }
+  if (hours < 5) return { level: 'red', title: "Tidur <5 jam: skip, jalan 20'", advice: [`Tidur ${hours} jam (<5). Skip latihan, cukup jalan kaki 20'. Tidak apa-apa.`] }
+  if (hours < 6) return { level: 'yellow', title: 'Kurang tidur: latihan lebih ringan', advice: [`Tidur ${hours} jam (5–6). Gym cukup 1–2 set per latihan, lari lebih pendek dari rencana.`] }
   return { level: 'green', title: 'Tidur cukup', advice: [] }
 }
 
@@ -78,14 +79,12 @@ export function readiness(input: { sys?: number; dia?: number; restingHr?: numbe
   const bp = bpVerdict(input.sys, input.dia)
   const hr = restingHrVerdict(input.restingHr, input.baseline)
   const sl = sleepVerdict(input.sleepHours)
-  // Kurang tidur di rencana = "ganti sesi jadi jalan kaki atau skip", jadi diperlakukan seperti red untuk keputusan latihan.
-  const sleepAsTraining: Level = sl.level === 'yellow' ? 'red' : sl.level
-  const level = worst(bp.level, hr.level, sleepAsTraining)
+  const level = worst(bp.level, hr.level, sl.level)
   const verdicts = [bp, hr, sl].filter((v) => v.level !== 'unknown' || v === bp)
   const headline =
     level === 'critical' ? bp.title
-    : level === 'red' ? (bp.level === 'red' ? bp.title : hr.level === 'red' ? hr.title : 'Kurang tidur: jalan kaki atau skip')
-    : level === 'yellow' ? bp.title
+    : level === 'red' ? (bp.level === 'red' ? bp.title : hr.level === 'red' ? hr.title : sl.title)
+    : level === 'yellow' ? (bp.level === 'yellow' ? bp.title : sl.title)
     : level === 'green' ? 'Siap latihan sesuai rencana'
     : 'Cek tensi & HR istirahat dulu'
   return {
@@ -101,17 +100,18 @@ export function readiness(input: { sys?: number; dia?: number; restingHr?: numbe
 function readinessWithoutBp(input: { restingHr?: number; sleepHours?: number; baseline: number }): Readiness {
   const hr = restingHrVerdict(input.restingHr, input.baseline)
   const sl = sleepVerdict(input.sleepHours)
-  const level = worst(hr.level, sl.level === 'yellow' ? 'red' : sl.level)
+  const level = worst(hr.level, sl.level)
   const note: Verdict = { level: 'unknown', title: 'Tensi belum dipantau', advice: [NO_BP_NOTE] }
   const headline =
-    level === 'red' ? (hr.level === 'red' ? hr.title : 'Kurang tidur: jalan kaki atau skip')
+    level === 'red' ? (hr.level === 'red' ? hr.title : sl.title)
+    : level === 'yellow' ? sl.title
     : level === 'green' ? 'Siap latihan sesuai rencana'
     : 'Cek HR istirahat & tidur dulu'
   return {
     level,
     headline,
     verdicts: [hr, sl, note].filter((v) => v.advice.length),
-    canTrain: level === 'green',
+    canTrain: level === 'green' || level === 'yellow',
     noStrides: true,
     noLoadIncrease: true,
   }

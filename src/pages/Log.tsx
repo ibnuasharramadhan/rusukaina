@@ -9,6 +9,7 @@ import { deleteDaily, deleteGym, deleteRun, saveGym, saveRun, uid } from '../lib
 import { formatDuration, formatPace, paceSecPerKm, parseDuration } from '../lib/pace'
 import { href } from '../lib/router'
 import { NO_BP_NOTE, readiness, runFlags } from '../lib/safety'
+import { runRuleWarnings } from '../lib/stats'
 import { useData } from '../lib/store'
 import type { GymLog, GymSet, RunLog, RunType } from '../lib/types'
 import { karvonenZones, zoneFor } from '../lib/zones'
@@ -62,6 +63,7 @@ function RunSection({ params }: { params: URLSearchParams }) {
   const zones = karvonenZones(profile.restingHrBaseline, profile.maxHr)
   const avg = num(f.avgHr)
   const zone = avg ? zoneFor(avg, zones) : undefined
+  const ruleWarnings = runRuleWarnings(f.date, runs)
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -85,6 +87,7 @@ function RunSection({ params }: { params: URLSearchParams }) {
     <>
       <Card title={editing ? 'Ubah lari' : 'Lari baru'}>
         {planned && <p className="muted small">Rencana {formatDate(f.date, true)}: {planned.title}</p>}
+        {ruleWarnings.map((w) => <p key={w} className="swap">{w}</p>)}
         <form className="form" onSubmit={submit}>
           <div className="row-when">
             <Field label="Tanggal"><input type="date" value={f.date} onChange={set('date')} required /></Field>
