@@ -1,4 +1,4 @@
-import { SCHEDULE, WEEKS } from '../data/plan'
+import { MAX_RUNS_PER_WEEK, SCHEDULE, sessionOn, weekOf, WEEKS } from '../data/plan'
 import { addDays, formatDate, type ISODate } from './date'
 import { formatDuration, formatPace, paceSecPerKm } from './pace'
 import { bpLevel } from './safety'
@@ -23,6 +23,21 @@ export function statusOf(s: PlannedSession, marks: Map<string, SessionMark>, run
   // Rencana sengaja fleksibel (mis. Rabu boleh ganti Gym B), jadi latihan apa pun yang tercatat di hari itu dihitung selesai.
   if (s.kind !== 'rest' && (runs.some((r) => r.date === s.date) || gym.some((g) => g.date === s.date))) return 'done'
   return null
+}
+
+/** Peringatan kalau lari di `date` melanggar aturan lari (maks 3/minggu, tidak 2 hari berturut-turut, tidak di hari gym/libur). */
+export function runRuleWarnings(date: ISODate, runs: RunLog[]): string[] {
+  const out: string[] = []
+  const others = runs.filter((r) => r.date !== date)
+  const plan = sessionOn(date)
+  if (plan && !['easy', 'long', 'race'].includes(plan.kind)) out.push('Hari ini jadwalnya bukan lari. Hari gym/libur tidak diganti lari.')
+  if (others.some((r) => r.date === addDays(date, -1) || r.date === addDays(date, 1))) out.push('Ada lari di hari sebelum/sesudahnya. Jangan lari 2 hari berturut-turut.')
+  const w = weekOf(date)
+  if (w && !plan?.extraRunOk) {
+    const n = new Set(others.filter((r) => r.date >= w.start && r.date <= w.end).map((r) => r.date)).size
+    if (n >= MAX_RUNS_PER_WEEK) out.push(`Sudah ${n} lari minggu ini. Maks ${MAX_RUNS_PER_WEEK} lari per minggu.`)
+  }
+  return out
 }
 
 /** Sesi latihan yang sudah lewat (sampai `until`) dan berapa yang selesai. */

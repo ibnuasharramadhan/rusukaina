@@ -75,11 +75,25 @@ function sessionFor(date: ISODate, w: WeekSpec): PlannedSession {
   }
 }
 
+// Perubahan per tanggal dari thread coaching (revisi 8 Okt), menimpa template mingguan.
+export const OVERRIDES: Record<ISODate, Omit<PlannedSession, 'date'>> = {
+  '2026-10-09': { kind: 'rest', title: 'Libur', detail: 'Istirahat setelah lari Rabu dan Kamis.' },
+  '2026-10-10': { kind: 'rest', title: 'Libur', detail: 'Long run minggu ini sudah dilakukan Kamis.' },
+  '2026-10-11': {
+    kind: 'easy', title: "Lari easy 30–40'", minutes: 35, extraRunOk: true,
+    detail: 'HR ≤145, pakai jam. Jangan lebih panjang dari lari Kamis. Lari ke-4 minggu ini: pengecualian, mulai minggu depan maks 3.',
+  },
+  '2026-10-12': { kind: 'gymB', title: 'Gym B (full body)', minutes: 40, detail: "Pembuka minggu 3. Jam istirahat siang, 35–40'" },
+}
+
 /** Semua sesi harian dari 1 Okt sampai 5 Des. */
 export function buildSchedule(): PlannedSession[] {
   const out: PlannedSession[] = []
   for (const w of WEEKS) {
-    for (let d = w.start; d <= w.end; d = addDays(d, 1)) out.push(sessionFor(d, w))
+    for (let d = w.start; d <= w.end; d = addDays(d, 1)) {
+      const o = OVERRIDES[d]
+      out.push(o ? { date: d, ...o } : sessionFor(d, w))
+    }
   }
   return out
 }
@@ -96,6 +110,11 @@ export function weekOf(date: ISODate): WeekSpec | undefined {
 
 export const PRIORITY_NOTE =
   'Kalau minggu kerja kacau: prioritas 1 = Sabtu long run, 2 = 2x gym, 3 = sisanya. Minggu dengan cuma 3 sesi tetap minggu yang bagus.'
+
+export const MAX_RUNS_PER_WEEK = 3
+
+export const RUN_RULES =
+  'Aturan lari: maks 3 lari per minggu, tidak lari 2 hari berturut-turut, dan hari gym/libur tidak diganti lari.'
 
 export function describeDay(date: ISODate): string {
   return dayName(date)
