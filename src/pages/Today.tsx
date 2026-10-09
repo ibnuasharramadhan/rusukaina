@@ -18,7 +18,7 @@ import type { DailyLog, PlannedSession, RunLog } from '../lib/types'
 const km = (n: number) => String(n).replace('.', ',')
 
 export function Today() {
-  const { profile, daily, runs, gym, marks, lastExportAt, refresh } = useData()
+  const { profile, daily, runs, walks, gym, marks, lastExportAt, refresh } = useData()
   const t = today()
   const d = daily.find((x) => x.date === t)
   const [editing, setEditing] = useState(false)
@@ -27,7 +27,7 @@ export function Today() {
   const week = weekOf(t)
   const daysToRace = diffDays(t, profile.raceDate)
   const markMap = new Map(marks.map((m) => [m.date, m]))
-  const status = session ? statusOf(session, markMap, runs, gym) : null
+  const status = session ? statusOf(session, markMap, runs, gym, walks) : null
   const lastRun = runs[runs.length - 1]
   const { start: planStart, end: planEnd, schedule, weeks } = plan()
   const upcoming = schedule.filter((s) => s.date > t && s.kind !== 'rest').slice(0, 3)
@@ -85,7 +85,7 @@ export function Today() {
         </Card>
       )}
 
-      <WeekRings t={t} runs={runs} gym={gym} marks={marks} />
+      <WeekRings t={t} runs={runs} walks={walks} gym={gym} marks={marks} />
 
       {showRace && <RaceResultCard name={profile.raceName} date={profile.raceDate} result={result} />}
 
@@ -241,6 +241,7 @@ function TodaySession({ session, easyCap, canTrain, noStrides, status, onMark, r
         session.kind !== 'rest' && (
           <div className="row wrap actions">
             {isRun && <a className="btn primary" href={href('catat', { tab: 'lari', date: session.date })}>Catat lari</a>}
+            {session.kind === 'walk' && <a className="btn primary" href={href('catat', { tab: 'lari', date: session.date, type: 'walk' })}>Catat jalan</a>}
             {isGym && <a className="btn primary" href={href('catat', { tab: 'gym', date: session.date, w: session.kind === 'gymA' ? 'A' : 'B' })}>Mulai Gym {session.kind === 'gymA' ? 'A' : 'B'}</a>}
             <button className="btn" onClick={(e) => onMark('done', originOf(e))}>Tandai selesai</button>
             <button className="btn ghost" onClick={() => onMark('skipped')}>Lewati</button>

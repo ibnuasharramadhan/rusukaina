@@ -17,11 +17,13 @@ export interface WeekStat {
 const isTraining = (s: PlannedSession) => s.kind !== 'rest'
 
 /** Status sesi: tanda manual menang; kalau tidak ada, lari/gym yang tercatat di tanggal itu dihitung selesai. */
-export function statusOf(s: PlannedSession, marks: Map<string, SessionMark>, runs: RunLog[], gym: GymLog[]): SessionStatus | null {
+export function statusOf(s: PlannedSession, marks: Map<string, SessionMark>, runs: RunLog[], gym: GymLog[], walks: RunLog[] = []): SessionStatus | null {
   const m = marks.get(s.date)
   if (m) return m.status
   // Rencana sengaja fleksibel (mis. Rabu boleh ganti Gym B), jadi latihan apa pun yang tercatat di hari itu dihitung selesai.
   if (s.kind !== 'rest' && (runs.some((r) => r.date === s.date) || gym.some((g) => g.date === s.date))) return 'done'
+  // Jalan kaki hanya menyelesaikan sesi jalan, bukan sesi lari/gym.
+  if (s.kind === 'walk' && walks.some((w) => w.date === s.date)) return 'done'
   return null
 }
 
@@ -41,13 +43,13 @@ export function runRuleWarnings(date: ISODate, runs: RunLog[]): string[] {
 }
 
 /** Sesi latihan yang sudah lewat (sampai `until`) dan berapa yang selesai. */
-export function adherence(runs: RunLog[], gym: GymLog[], marks: SessionMark[], until: ISODate): { planned: number; done: number } {
+export function adherence(runs: RunLog[], gym: GymLog[], marks: SessionMark[], until: ISODate, walks: RunLog[] = []): { planned: number; done: number } {
   const markMap = new Map(marks.map((m) => [m.date, m]))
   const past = plan().schedule.filter((s) => isTraining(s) && s.date <= until)
-  return { planned: past.length, done: past.filter((s) => statusOf(s, markMap, runs, gym) === 'done').length }
+  return { planned: past.length, done: past.filter((s) => statusOf(s, markMap, runs, gym, walks) === 'done').length }
 }
 
-export function weekStats(runs: RunLog[], gym: GymLog[], marks: SessionMark[]): WeekStat[] {
+export function weekStats(runs: RunLog[], gym: GymLog[], marks: SessionMark[], walks: RunLog[] = []): WeekStat[] {
   const markMap = new Map(marks.map((m) => [m.date, m]))
   return plan().weeks.map((w) => {
     const inWeek = (d: ISODate) => d >= w.start && d <= w.end
@@ -60,7 +62,7 @@ export function weekStats(runs: RunLog[], gym: GymLog[], marks: SessionMark[]): 
       runs: wr.length,
       gym: gym.filter((g) => inWeek(g.date)).length,
       planned: sessions.length,
-      done: sessions.filter((s) => statusOf(s, markMap, runs, gym) === 'done').length,
+      done: sessions.filter((s) => statusOf(s, markMap, runs, gym, walks) === 'done').length,
     }
   })
 }
@@ -89,7 +91,7 @@ export function bpAverage(daily: DailyLog[], days: number, until: ISODate): { sy
  * Ringkasan teks untuk ditempel ke chat coach. Sengaja plain text supaya
  * terbaca di mana saja (chat, WhatsApp, catatan).
  */
-export function coachSummary(input: { runs: RunLog[]; daily: DailyLog[]; gym: GymLog[]; until: ISODate; days?: number }): string {
+export function coachSummary(input: { runs: RunLog[]; walks?: RunLog[]; daily: DailyLog[]; gym: GymLog[]; until: ISODate; days?: number }): string {
   const days = input.days ?? 7
   const from = addDays(input.until, -(days - 1))
   const inRange = (d: ISODate) => d >= from && d <= input.until
@@ -100,6 +102,12 @@ export function coachSummary(input: { runs: RunLog[]; daily: DailyLog[]; gym: Gy
   for (const r of runs) {
     const hr = r.avgHr ? `, HR ${r.avgHr}${r.maxHr ? `/${r.maxHr}` : ''}` : ''
     lines.push(`- ${formatDate(r.date, true)}: ${r.type}, ${String(r.distanceKm).replace('.', ',')} km, ${formatDuration(r.durationSec)}, pace ${formatPace(paceSecPerKm(r.distanceKm, r.durationSec))}${hr}${r.notes ? `. ${r.notes}` : ''}`)
+  }
+
+  const walks = (input.walks ?? []).filter((w) => inRange(w.date))
+  if (walks.length) {
+    lines.push('', `JALAN KAKI (${walks.length}x)`)
+    for (const w of walks) lines.push(`- ${formatDate(w.date, true)}: ${String(w.distanceKm).replace('.', ',')} km, ${formatDuration(w.durationSec)}${w.avgHr ? `, HR ${w.avgHr}` : ''}`)
   }
 
   const gym = input.gym.filter((g) => inRange(g.date))

@@ -13,14 +13,14 @@ import type { SessionStatus } from '../lib/types'
 const STATUS_LABEL: Record<SessionStatus, string> = { done: '', skipped: '–', swapped: '↺' }
 
 export function Schedule() {
-  const { runs, gym, marks, refresh } = useData()
+  const { runs, walks, gym, marks, refresh } = useData()
   const t = today()
   const { weeks, schedule, priorityNote } = plan()
   const current = weeks.find((w) => t >= w.start && t <= w.end)?.no ?? (t < weeks[0].start ? 1 : weeks.length)
   const [open, setOpen] = useState<number>(current)
   const [menu, setMenu] = useState<string | null>(null)
   const markMap = new Map(marks.map((m) => [m.date, m]))
-  const stats = weekStats(runs, gym, marks)
+  const stats = weekStats(runs, gym, marks, walks)
 
   async function mark(date: string, status: SessionStatus | null) {
     if (status === 'done') celebrate()
@@ -60,7 +60,7 @@ export function Schedule() {
                 {w.note && <p className="week-note">{w.note}</p>}
                 <ul className="days">
                   {days.map((s) => {
-                    const status = statusOf(s, markMap, runs, gym)
+                    const status = statusOf(s, markMap, runs, gym, walks)
                     const missed = !status && s.date < t && s.kind !== 'rest'
                     return (
                       <li key={s.date} className={`${s.date === t ? 'is-today' : ''} ${status ?? ''} ${missed ? 'missed' : ''} k-${s.kind}`}>
@@ -82,6 +82,7 @@ export function Schedule() {
                             <button onClick={() => mark(s.date, 'skipped')}>Dilewati</button>
                             {(s.kind === 'easy' || s.kind === 'long' || s.kind === 'race') && <a href={href('catat', { tab: 'lari', date: s.date })}>Catat lari…</a>}
                             {(s.kind === 'gymA' || s.kind === 'gymB') && <a href={href('catat', { tab: 'gym', date: s.date, w: s.kind === 'gymA' ? 'A' : 'B' })}>Catat gym…</a>}
+                            {s.kind === 'walk' && <a href={href('catat', { tab: 'lari', date: s.date, type: 'walk' })}>Catat jalan…</a>}
                             {markMap.has(s.date) && <button onClick={() => mark(s.date, null)}>Hapus tanda</button>}
                           </div>
                         )}

@@ -17,6 +17,8 @@ import { karvonenZones, zoneFor } from '../lib/zones'
 
 type Tab = 'lari' | 'gym' | 'harian'
 
+const TYPE_LABEL: Record<RunType, string> = { treadmill: 'treadmill', outdoor: 'luar', race: 'race', walk: 'jalan kaki' }
+
 export function Log({ params }: { params: URLSearchParams }) {
   const { profile } = useData()
   const tab = (params.get('tab') as Tab) || 'lari'
@@ -25,7 +27,7 @@ export function Log({ params }: { params: URLSearchParams }) {
     <div className="page">
       <PageHeader eyebrow={profile.trackBp ? 'Lari, gym, tensi' : 'Lari, gym, HR'} title="Catat" />
       <Segmented<Tab> value={tab} onChange={setTab} options={[
-        { value: 'lari', label: 'Lari' }, { value: 'gym', label: 'Gym' }, { value: 'harian', label: profile.trackBp ? 'Tensi & HR' : 'HR & tidur' },
+        { value: 'lari', label: 'Lari/jalan' }, { value: 'gym', label: 'Gym' }, { value: 'harian', label: profile.trackBp ? 'Tensi & HR' : 'HR & tidur' },
       ]} />
       {tab === 'lari' && <RunSection key={params.toString()} params={params} />}
       {tab === 'gym' && <GymSection key={params.toString()} params={params} />}
@@ -37,14 +39,15 @@ export function Log({ params }: { params: URLSearchParams }) {
 // ---------- Lari
 
 function RunSection({ params }: { params: URLSearchParams }) {
-  const { runs, profile, refresh, strava, stravaBusy, syncStrava } = useData()
-  const editing = runs.find((r) => r.id === params.get('id'))
+  const { runs, walks, profile, refresh, strava, stravaBusy, syncStrava } = useData()
+  const all = [...runs, ...walks].sort((a, b) => (a.date + (a.time ?? '')).localeCompare(b.date + (b.time ?? '')))
+  const editing = all.find((r) => r.id === params.get('id'))
   const initialDate = editing?.date ?? params.get('date') ?? today()
   const planned = sessionOn(initialDate)
   const [f, setF] = useState(() => ({
     date: initialDate,
     time: editing?.time ?? '',
-    type: editing?.type ?? (planned?.kind === 'race' ? 'race' : 'treadmill') as RunType,
+    type: editing?.type ?? (params.get('type') === 'walk' || planned?.kind === 'walk' ? 'walk' : planned?.kind === 'race' ? 'race' : 'treadmill') as RunType,
     distance: editing ? String(editing.distanceKm) : '',
     duration: editing ? formatDuration(editing.durationSec) : '',
     avgHr: editing?.avgHr ? String(editing.avgHr) : '',
@@ -64,7 +67,8 @@ function RunSection({ params }: { params: URLSearchParams }) {
   const zones = karvonenZones(profile.restingHrBaseline, profile.maxHr)
   const avg = num(f.avgHr)
   const zone = avg ? zoneFor(avg, zones) : undefined
-  const ruleWarnings = runRuleWarnings(f.date, runs)
+  const isWalk = f.type === 'walk'
+  const ruleWarnings = isWalk ? [] : runRuleWarnings(f.date, runs)
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -87,7 +91,7 @@ function RunSection({ params }: { params: URLSearchParams }) {
 
   return (
     <>
-      <Card title={editing ? 'Ubah lari' : 'Lari baru'}>
+      <Card title={editing ? (isWalk ? 'Ubah jalan' : 'Ubah lari') : isWalk ? 'Jalan kaki baru' : 'Lari baru'}>
         {planned && <p className="muted small">Rencana {formatDate(f.date, true)}: {planned.title}</p>}
         {ruleWarnings.map((w) => <p key={w} className="swap">{w}</p>)}
         <form className="form" onSubmit={submit}>
@@ -99,6 +103,7 @@ function RunSection({ params }: { params: URLSearchParams }) {
                 <option value="treadmill">Treadmill</option>
                 <option value="outdoor">Luar</option>
                 <option value="race">Race</option>
+                <option value="walk">Jalan kaki</option>
               </select>
             </Field>
           </div>
@@ -131,16 +136,16 @@ function RunSection({ params }: { params: URLSearchParams }) {
           </div>
         )}
       </Card>
-      <Card title="Riwayat lari" action={strava ? <button className="link small" onClick={syncStrava} disabled={stravaBusy}>{stravaBusy ? 'Menyinkronkan…' : 'Sinkron Strava'}</button> : undefined}>
-        {!runs.length && <p className="muted">Belum ada lari tercatat.</p>}
+      <Card title="Riwayat lari & jalan" action={strava ? <button className="link small" onClick={syncStrava} disabled={stravaBusy}>{stravaBusy ? 'Menyinkronkan…' : 'Sinkron Strava'}</button> : undefined}>
+        {!all.length && <p className="muted">Belum ada lari tercatat.</p>}
         <ul className="history">
-          {[...runs].reverse().map((r) => (
+          {[...all].reverse().map((r) => (
             <li key={r.id}>
               <div className="grow">
-                <b>{formatDate(r.date, true)}</b> · {r.type} · {String(r.distanceKm).replace('.', ',')} km · {formatDuration(r.durationSec)}
+                <b>{formatDate(r.date, true)}</b> · {TYPE_LABEL[r.type]} · {String(r.distanceKm).replace('.', ',')} km · {formatDuration(r.durationSec)}
                 <div className="muted small">
                   Pace {formatPace(paceSecPerKm(r.distanceKm, r.durationSec))} · HR {r.avgHr ?? '–'}/{r.maxHr ?? '–'}
-                  {r.avgHr && r.avgHr > profile.easyCap && r.type !== 'race' ? ' · di atas batas easy' : ''}
+                  {r.avgHr && r.avgHr > profile.easyCap && r.type !== 'race' && r.type !== 'walk' ? ' · di atas batas easy' : ''}
                 </div>
               </div>
               <a className="link" href={href('catat', { tab: 'lari', id: r.id })}>Ubah</a>
