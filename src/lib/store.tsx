@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { LEGACY_PROFILE, planFor, setActivePlan } from '../data/plan'
 import * as repo from './db'
 import * as strava from './strava'
-import type { DailyLog, GymLog, Profile, RunLog, SessionMark } from './types'
+import type { DailyLog, GymLog, Profile, RunLog, SessionMark, Shoe } from './types'
 
 interface Data {
   ready: boolean
@@ -15,6 +15,7 @@ interface Data {
   daily: DailyLog[]
   gym: GymLog[]
   marks: SessionMark[]
+  shoes: Shoe[]
   lastExportAt?: number
   /** Status Strava: undefined = belum terhubung. */
   strava?: strava.StravaAuth
@@ -30,18 +31,18 @@ const Ctx = createContext<Data | null>(null)
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>({
-    ready: false, needsOnboarding: false, profile: LEGACY_PROFILE, runs: [], walks: [], daily: [], gym: [], marks: [],
+    ready: false, needsOnboarding: false, profile: LEGACY_PROFILE, runs: [], walks: [], daily: [], gym: [], marks: [], shoes: [],
   })
   const [stravaMsg, setStravaMsg] = useState('')
   const [stravaBusy, setStravaBusy] = useState(false)
 
   const refresh = useCallback(async () => {
-    const [profile, activities, daily, gym, marks, lastExportAt, stravaAuth] = await Promise.all([
-      repo.getProfile(), repo.listRuns(), repo.listDaily(), repo.listGym(), repo.listMarks(), repo.getLastExportAt(), strava.getStravaAuth(),
+    const [profile, activities, daily, gym, marks, shoes, lastExportAt, stravaAuth] = await Promise.all([
+      repo.getProfile(), repo.listRuns(), repo.listDaily(), repo.listGym(), repo.listMarks(), repo.listShoes(), repo.getLastExportAt(), strava.getStravaAuth(),
     ])
     setActivePlan(planFor(profile ?? LEGACY_PROFILE))
     setState({ ready: true, needsOnboarding: !profile, profile: profile ?? LEGACY_PROFILE,
-      runs: activities.filter((r) => r.type !== 'walk'), walks: activities.filter((r) => r.type === 'walk'), daily, gym, marks, lastExportAt, strava: stravaAuth })
+      runs: activities.filter((r) => r.type !== 'walk'), walks: activities.filter((r) => r.type === 'walk'), daily, gym, marks, shoes, lastExportAt, strava: stravaAuth })
   }, [])
 
   const syncStrava = useCallback(async () => {
