@@ -23,7 +23,7 @@ export function Today() {
   const t = today()
   const d = daily.find((x) => x.date === t)
   const [editing, setEditing] = useState(false)
-  const r = readiness({ sys: d?.sys, dia: d?.dia, restingHr: d?.restingHr, sleepHours: d?.sleepHours, baseline: profile.restingHrBaseline, trackBp: profile.trackBp, pain: painVerdict(daily, t) })
+  const r = readiness({ sys: d?.sys, dia: d?.dia, restingHr: d?.restingHr, sleepHours: d?.sleepHours, baseline: profile.restingHrBaseline, trackBp: profile.trackBp, hypertension: !!profile.medName, pain: painVerdict(daily, t) })
   const session = sessionOn(t)
   const week = weekOf(t)
   const daysToRace = diffDays(t, profile.raceDate)

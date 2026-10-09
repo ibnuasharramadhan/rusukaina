@@ -19,6 +19,8 @@ export function DailyForm({ date, compact, onSaved }: { date: string; compact?: 
     painAreas: existing?.painAreas ?? [], painScore: s(existing?.painScore),
   })
   const [err, setErr] = useState('')
+  // Di kartu Hari ini (compact), pilihan nyeri disembunyikan sampai dibutuhkan.
+  const [showPain, setShowPain] = useState(!compact || !!existing?.painAreas?.length)
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setF({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value })
 
@@ -65,13 +67,14 @@ export function DailyForm({ date, compact, onSaved }: { date: string; compact?: 
         </div>
       )}
       {profile.medName && <label className="check"><input type="checkbox" checked={f.medTaken} onChange={set('medTaken')} /> {profile.medName} sudah diminum</label>}
-      <fieldset className="pain">
+      {!showPain && <button type="button" className="link small" style={{ justifySelf: 'start' }} onClick={() => setShowPain(true)}>Ada nyeri hari ini?</button>}
+      {showPain && <fieldset className="pain">
         <legend className="field-l">Nyeri hari ini (kalau ada)</legend>
         <div className="chips">
           {PAIN_AREAS.map((a) => {
             const on = f.painAreas.includes(a)
             return (
-              <button key={a} type="button" className={`chip ${on ? 'on' : ''}`} aria-pressed={on}
+              <button key={a} type="button" className={`pain-chip ${on ? 'on' : ''}`} aria-pressed={on}
                 onClick={() => setF({ ...f, painScore: f.painScore || '3', painAreas: on ? f.painAreas.filter((x) => x !== a) : [...f.painAreas, a] })}>{a}</button>
             )
           })}
@@ -84,7 +87,7 @@ export function DailyForm({ date, compact, onSaved }: { date: string; compact?: 
             </div>
           </Field>
         )}
-      </fieldset>
+      </fieldset>}
       {!compact && (
         <>
           <Field label="Keluhan (kalau ada)"><input value={f.symptoms} onChange={set('symptoms')} placeholder="pusing, bengkak pergelangan kaki, ..." /></Field>

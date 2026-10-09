@@ -22,9 +22,9 @@ export function karvonenZones(rest: number, max: number): Zone[] {
   const at = (p: number) => Math.round(rest + hrr * p)
   return [
     { id: 'z1', name: 'Z1 Pemulihan', low: at(0.5), high: at(0.6), use: 'Jalan cepat, pendinginan' },
-    { id: 'z2', name: 'Z2 Easy (aerobik)', low: at(0.6), high: at(0.7), use: 'Hampir semua lari sampai Desember' },
+    { id: 'z2', name: 'Z2 Easy (aerobik)', low: at(0.6), high: at(0.7), use: 'Hampir semua lari sampai race' },
     { id: 'z3', name: 'Z3 Tempo ringan', low: at(0.7), high: at(0.8), use: 'Hanya di race day, bagian tengah' },
-    { id: 'z4', name: 'Z4 Threshold', low: at(0.8), high: at(0.9), use: 'Belum dipakai (tunggu izin dokter)' },
+    { id: 'z4', name: 'Z4 Threshold', low: at(0.8), high: at(0.9), use: 'Belum dipakai di rencana ini' },
     { id: 'z5', name: 'Z5 Maksimal', low: at(0.9), high: null, use: 'Tidak dipakai' },
   ]
 }

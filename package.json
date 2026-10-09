@@ -1,7 +1,7 @@
 {
   "name": "rusukaina",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "description": "PWA pelatih lari & gym pribadi menuju UI Ultra 7K: jadwal, log lari, log tensi & HR, zona HR, grafik progres. Offline-first.",
   "scripts": {
