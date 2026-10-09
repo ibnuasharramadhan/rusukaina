@@ -10,14 +10,14 @@ import { KIND, CountUp } from './ui'
 const RUN = new Set(['easy', 'long', 'race'])
 const GYM = new Set(['gymA', 'gymB'])
 
-export function WeekRings({ t, runs, gym, marks }: { t: ISODate; runs: RunLog[]; gym: GymLog[]; marks: SessionMark[] }) {
+export function WeekRings({ t, runs, walks, gym, marks }: { t: ISODate; runs: RunLog[]; walks: RunLog[]; gym: GymLog[]; marks: SessionMark[] }) {
   const mon = mondayOf(t)
   const days = Array.from({ length: 7 }, (_, i) => addDays(mon, i))
   const markMap = new Map(marks.map((m) => [m.date, m]))
   const plan = activePlan().schedule.filter((s) => s.date >= days[0] && s.date <= days[6])
   if (!plan.length) return null
   const training = plan.filter((s) => s.kind !== 'rest')
-  const done = training.filter((s) => statusOf(s, markMap, runs, gym) === 'done').length
+  const done = training.filter((s) => statusOf(s, markMap, runs, gym, walks) === 'done').length
   const runsDone = new Set(runs.filter((r) => r.date >= days[0] && r.date <= days[6]).map((r) => r.date)).size
   const gymDone = gym.filter((g) => g.date >= days[0] && g.date <= days[6]).length
   const rings = [
@@ -56,7 +56,7 @@ export function WeekRings({ t, runs, gym, marks }: { t: ISODate; runs: RunLog[];
       <ol className="strip">
         {days.map((d, i) => {
           const s = plan.find((x) => x.date === d)
-          const st = s ? statusOf(s, markMap, runs, gym) : null
+          const st = s ? statusOf(s, markMap, runs, gym, walks) : null
           const tone = s ? KIND[s.kind].tone : 'rest'
           const past = d < t
           return (

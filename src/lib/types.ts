@@ -27,7 +27,8 @@ export interface PlanWeek {
   deload?: boolean
 }
 
-export type RunType = 'treadmill' | 'outdoor' | 'race'
+/** 'walk' = jalan kaki: disimpan bersama lari, tapi tidak dihitung sebagai lari. */
+export type RunType = 'treadmill' | 'outdoor' | 'race' | 'walk'
 
 export interface RunLog {
   id: string

@@ -116,11 +116,11 @@ function PlanCard() {
 }
 
 function DataTools() {
-  const { runs, daily, gym, refresh } = useData()
+  const { runs, walks, daily, gym, refresh } = useData()
   const [msg, setMsg] = useState('')
   const [confirmWipe, setConfirmWipe] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
-  const summary = coachSummary({ runs, daily, gym, until: today(), days: 7 })
+  const summary = coachSummary({ runs, walks, daily, gym, until: today(), days: 7 })
 
   async function doExport() {
     await downloadBackup()

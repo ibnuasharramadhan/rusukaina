@@ -1,5 +1,7 @@
 # Rusukaina: PWA pelatih lari & gym
 
+[![CI](https://github.com/ibnuasharramadhan/rusukaina/actions/workflows/ci.yml/badge.svg)](https://github.com/ibnuasharramadhan/rusukaina/actions/workflows/ci.yml)
+
 Aplikasi web progresif (PWA) untuk menjalankan program latihan 10 minggu menuju **UI Ultra 7K (5 Des 2026)**: jadwal harian, log lari dan gym, catatan tensi & HR istirahat dengan aturan keamanan hipertensi, zona HR, dan grafik progres. Bisa dipasang di layar utama HP tanpa Play Store / App Store dan tetap jalan tanpa internet.
 
 > Dibuat untuk satu atlet dengan hipertensi terkontrol obat. Aplikasi ini alat bantu catatan, bukan alat medis.

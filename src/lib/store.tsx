@@ -9,7 +9,9 @@ interface Data {
   /** HP baru tanpa profil: tampilkan onboarding. */
   needsOnboarding: boolean
   profile: Profile
+  /** Lari saja (tanpa jalan kaki). */
   runs: RunLog[]
+  walks: RunLog[]
   daily: DailyLog[]
   gym: GymLog[]
   marks: SessionMark[]
@@ -28,17 +30,18 @@ const Ctx = createContext<Data | null>(null)
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>({
-    ready: false, needsOnboarding: false, profile: LEGACY_PROFILE, runs: [], daily: [], gym: [], marks: [],
+    ready: false, needsOnboarding: false, profile: LEGACY_PROFILE, runs: [], walks: [], daily: [], gym: [], marks: [],
   })
   const [stravaMsg, setStravaMsg] = useState('')
   const [stravaBusy, setStravaBusy] = useState(false)
 
   const refresh = useCallback(async () => {
-    const [profile, runs, daily, gym, marks, lastExportAt, stravaAuth] = await Promise.all([
+    const [profile, activities, daily, gym, marks, lastExportAt, stravaAuth] = await Promise.all([
       repo.getProfile(), repo.listRuns(), repo.listDaily(), repo.listGym(), repo.listMarks(), repo.getLastExportAt(), strava.getStravaAuth(),
     ])
     setActivePlan(planFor(profile ?? LEGACY_PROFILE))
-    setState({ ready: true, needsOnboarding: !profile, profile: profile ?? LEGACY_PROFILE, runs, daily, gym, marks, lastExportAt, strava: stravaAuth })
+    setState({ ready: true, needsOnboarding: !profile, profile: profile ?? LEGACY_PROFILE,
+      runs: activities.filter((r) => r.type !== 'walk'), walks: activities.filter((r) => r.type === 'walk'), daily, gym, marks, lastExportAt, strava: stravaAuth })
   }, [])
 
   const syncStrava = useCallback(async () => {

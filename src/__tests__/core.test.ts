@@ -211,3 +211,21 @@ describe('tanpa tensimeter + aturan tidur 3 tingkat', () => {
     expect(readiness({ restingHr: 58, sleepHours: 5.5, baseline: 58, trackBp: false })).toMatchObject({ level: 'yellow', canTrain: true })
   })
 })
+
+describe('jalan kaki', () => {
+  const walk = (date: string): RunLog => ({ id: `w-${date}`, date, type: 'walk', distanceKm: 1.54, durationSec: 1226, createdAt: 0, updatedAt: 0 })
+
+  it('menyelesaikan sesi jalan, tapi tidak sesi lari atau gym', () => {
+    const walks = [walk('2026-10-06'), walk('2026-10-07'), walk('2026-10-08')]
+    const marks = new Map()
+    expect(statusOf(sessionOn('2026-10-06')!, marks, [], [], walks)).toBe('done') // Selasa: jalan
+    expect(statusOf(sessionOn('2026-10-07')!, marks, [], [], walks)).toBeNull() // Rabu: lari
+    expect(statusOf(sessionOn('2026-10-08')!, marks, [], [], walks)).toBeNull() // Kamis: gym
+  })
+
+  it('masuk laporan coach di bagian sendiri', () => {
+    const text = coachSummary({ runs: [], walks: [walk('2026-10-06')], daily: [], gym: [], until: '2026-10-08' })
+    expect(text).toMatch(/JALAN KAKI \(1x\)/)
+    expect(text).toMatch(/LARI \(0x/)
+  })
+})

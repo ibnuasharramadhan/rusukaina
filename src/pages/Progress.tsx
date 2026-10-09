@@ -9,13 +9,13 @@ import { useData } from '../lib/store'
 const C = { s1: 'var(--series-1)', s2: 'var(--series-2)' }
 
 export function Progress() {
-  const { runs, daily, gym, marks, profile } = useData()
+  const { runs, walks, daily, gym, marks, profile } = useData()
   const t = today()
-  const ws = weekStats(runs, gym, marks)
+  const ws = weekStats(runs, gym, marks, walks)
   const currentNo = weekOf(t)?.no
   const easy = runs.filter((r) => r.type !== 'race')
   const totalKm = runs.reduce((a, r) => a + r.distanceKm, 0)
-  const { planned, done } = adherence(runs, gym, marks, t)
+  const { planned, done } = adherence(runs, gym, marks, t, walks)
   const avg7 = bpAverage(daily, 7, t)
   const hrRows = daily.filter((d) => d.restingHr && d.date >= addDays(t, -6) && d.date <= t)
   const hr7 = hrRows.length ? Math.round(hrRows.reduce((a, d) => a + d.restingHr!, 0) / hrRows.length) : null
