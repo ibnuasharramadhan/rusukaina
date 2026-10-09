@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { DailyForm } from '../components/DailyForm'
+import { ShareSheet } from '../components/ShareSheet'
 import { Icon } from '../components/icons'
 import { Card, Field, LevelBadge, num, PageHeader, Segmented } from '../components/ui'
 import { GYM, GYM_RULES } from '../data/gym'
@@ -60,6 +61,7 @@ function RunSection({ params }: { params: URLSearchParams }) {
   }))
   const [err, setErr] = useState('')
   const [saved, setSaved] = useState<RunLog | null>(null)
+  const [sharing, setSharing] = useState<RunLog | null>(null)
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value })
 
   const dist = num(f.distance)
@@ -134,6 +136,7 @@ function RunSection({ params }: { params: URLSearchParams }) {
             <b>Tersimpan.</b> {formatPace(paceSecPerKm(saved.distanceKm, saved.durationSec))}/km
             {runFlags(saved, profile.easyCap).map((x) => <p key={x} className="flag"><Icon name="alert" size={16} /> {x}</p>)}
             {!runFlags(saved, profile.easyCap).length && saved.avgHr && <p>HR terjaga di zona easy. Mantap.</p>}
+            <button className="btn small" onClick={() => setSharing(saved)}><Icon name="share" size={16} /> Bagikan hasil</button>
           </div>
         )}
       </Card>
@@ -150,12 +153,14 @@ function RunSection({ params }: { params: URLSearchParams }) {
                   {r.avgHr && r.avgHr > profile.easyCap && r.type !== 'race' && r.type !== 'walk' ? ' · di atas batas easy' : ''}
                 </div>
               </div>
+              <button className="icon-btn" aria-label="Bagikan" title="Bagikan" onClick={() => setSharing(r)}><Icon name="share" size={18} /></button>
               <a className="link" href={href('catat', { tab: 'lari', id: r.id })}>Ubah</a>
               <DeleteBtn onConfirm={async () => { await deleteRun(r.id); await refresh() }} />
             </li>
           ))}
         </ul>
       </Card>
+      {sharing && <ShareSheet run={sharing} onClose={() => setSharing(null)} />}
     </>
   )
 }

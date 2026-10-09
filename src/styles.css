@@ -492,3 +492,18 @@ details summary { cursor: pointer; font-weight: 600; }
 .file-import { display: grid; gap: 8px; justify-items: start; padding-bottom: 12px; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
 .file-import p { margin: 0; }
 .file-import .btn { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Kartu share */
+.saved .btn { margin-top: 8px; display: inline-flex; align-items: center; gap: 6px; }
+.icon-btn { background: none; border: 0; padding: 6px; color: var(--accent-text); cursor: pointer; border-radius: 8px; display: inline-grid; place-items: center; }
+.icon-btn:hover { background: var(--accent-soft); }
+.sheet-backdrop { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, 0.55); display: grid; align-items: end; justify-items: center; animation: fade-in 0.2s ease; }
+.sheet { width: min(100%, 520px); max-height: 92dvh; overflow: auto; background: var(--surface); color: var(--ink); border-radius: var(--radius) var(--radius) 0 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); display: grid; gap: 12px; animation: sheet-up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.sheet-h { display: flex; justify-content: space-between; align-items: center; }
+.share-preview { display: grid; place-items: center; aspect-ratio: 4 / 5; margin: 0 auto; width: min(100%, calc(60dvh * 0.8)); background: var(--surface-2); border-radius: var(--radius-s); overflow: hidden; }
+.share-preview img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.sheet .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+@keyframes sheet-up { from { transform: translateY(100%); } }
+@keyframes fade-in { from { opacity: 0; } }
+@media (min-width: 640px) { .sheet-backdrop { align-items: center; } .sheet { border-radius: var(--radius); } }
+@media (prefers-reduced-motion: reduce) { .sheet, .sheet-backdrop { animation: none; } }

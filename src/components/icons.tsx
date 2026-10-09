@@ -21,6 +21,7 @@ const PATHS = {
   download: 'M12 4v11M7 10.5l5 5 5-5M5 20h14',
   alert: 'M12 4l9 16H3zM12 10v4.5M12 17.5v.5',
   bolt: 'M13 3L5 13.5h6L10 21l8-10.5h-6z',
+  share: 'M12 15V4M7.5 8.5L12 4l4.5 4.5M6 12H5a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-6a1 1 0 0 0-1-1h-1',
 } as const
 
 export type IconName = keyof typeof PATHS
