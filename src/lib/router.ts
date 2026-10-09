@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
+import { withViewTransition } from './motion'
 
 export type Route = 'hari-ini' | 'jadwal' | 'catat' | 'progres' | 'info'
 const ROUTES: Route[] = ['hari-ini', 'jadwal', 'catat', 'progres', 'info']
@@ -12,10 +14,19 @@ export function parseHash(hash: string): { route: Route; params: URLSearchParams
 
 export function useHashRoute() {
   const [loc, setLoc] = useState(() => parseHash(location.hash))
+  const current = useRef(loc.route)
   useEffect(() => {
     const on = () => {
-      setLoc(parseHash(location.hash))
-      window.scrollTo(0, 0)
+      const next = parseHash(location.hash)
+      const apply = () => {
+        flushSync(() => setLoc(next))
+        window.scrollTo(0, 0)
+      }
+      // Pindah halaman = transisi geser ke kiri/kanan; perubahan di halaman yang sama (mis. tab Lari/Gym) langsung saja.
+      const from = current.current
+      current.current = next.route
+      if (from === next.route) return apply()
+      withViewTransition(apply, ROUTES.indexOf(next.route) > ROUTES.indexOf(from) ? 'forward' : 'back')
     }
     window.addEventListener('hashchange', on)
     return () => window.removeEventListener('hashchange', on)
