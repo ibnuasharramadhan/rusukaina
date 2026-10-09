@@ -487,3 +487,8 @@ details summary { cursor: pointer; font-weight: 600; }
 .steps span.on { background: var(--accent); animation: bar-grow 0.4s var(--ease-out) both; transform-origin: left; }
 .onboarding .seg button { min-width: 0; }
 .center { text-align: center; }
+
+/* Impor file jam di kartu riwayat */
+.file-import { display: grid; gap: 8px; justify-items: start; padding-bottom: 12px; margin-bottom: 8px; border-bottom: 1px solid var(--border); }
+.file-import p { margin: 0; }
+.file-import .btn { display: inline-flex; align-items: center; gap: 6px; }

@@ -54,7 +54,7 @@ export function isRun(a: StravaActivity): boolean {
   return RUN_TYPES.has(a.sport_type ?? a.type ?? '')
 }
 
-function formatSplits(splits: StravaActivity['splits_metric']): string | undefined {
+export function formatSplits(splits: StravaActivity['splits_metric']): string | undefined {
   if (!splits?.length) return undefined
   const parts: string[] = []
   for (const s of splits) {
