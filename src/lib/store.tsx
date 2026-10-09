@@ -1,11 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
-import { DEFAULT_PROFILE } from '../data/plan'
+import { LEGACY_PROFILE, planFor, setActivePlan } from '../data/plan'
 import * as repo from './db'
 import * as strava from './strava'
 import type { DailyLog, GymLog, Profile, RunLog, SessionMark } from './types'
 
 interface Data {
   ready: boolean
+  /** HP baru tanpa profil: tampilkan onboarding. */
+  needsOnboarding: boolean
   profile: Profile
   runs: RunLog[]
   daily: DailyLog[]
@@ -26,7 +28,7 @@ const Ctx = createContext<Data | null>(null)
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>({
-    ready: false, profile: DEFAULT_PROFILE, runs: [], daily: [], gym: [], marks: [],
+    ready: false, needsOnboarding: false, profile: LEGACY_PROFILE, runs: [], daily: [], gym: [], marks: [],
   })
   const [stravaMsg, setStravaMsg] = useState('')
   const [stravaBusy, setStravaBusy] = useState(false)
@@ -35,7 +37,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const [profile, runs, daily, gym, marks, lastExportAt, stravaAuth] = await Promise.all([
       repo.getProfile(), repo.listRuns(), repo.listDaily(), repo.listGym(), repo.listMarks(), repo.getLastExportAt(), strava.getStravaAuth(),
     ])
-    setState({ ready: true, profile, runs, daily, gym, marks, lastExportAt, strava: stravaAuth })
+    setActivePlan(planFor(profile ?? LEGACY_PROFILE))
+    setState({ ready: true, needsOnboarding: !profile, profile: profile ?? LEGACY_PROFILE, runs, daily, gym, marks, lastExportAt, strava: stravaAuth })
   }, [])
 
   const syncStrava = useCallback(async () => {
@@ -53,7 +56,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     ;(async () => {
-      await repo.seedIfEmpty()
       const msg = await strava.handleStravaRedirect()
       if (msg) setStravaMsg(msg)
       await refresh()

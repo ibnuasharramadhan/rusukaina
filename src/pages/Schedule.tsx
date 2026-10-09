@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Icon } from '../components/icons'
 import { KindIcon, PageHeader } from '../components/ui'
 import { celebrate } from '../lib/motion'
-import { PRIORITY_NOTE, RUN_RULES, SCHEDULE, WEEKS } from '../data/plan'
+import { plan, RUN_RULES } from '../data/plan'
 import { formatDate, today } from '../lib/date'
 import { setMark } from '../lib/db'
 import { href } from '../lib/router'
@@ -15,7 +15,8 @@ const STATUS_LABEL: Record<SessionStatus, string> = { done: '', skipped: '–', 
 export function Schedule() {
   const { runs, gym, marks, refresh } = useData()
   const t = today()
-  const current = WEEKS.find((w) => t >= w.start && t <= w.end)?.no ?? (t < WEEKS[0].start ? 1 : WEEKS.length)
+  const { weeks, schedule, priorityNote } = plan()
+  const current = weeks.find((w) => t >= w.start && t <= w.end)?.no ?? (t < weeks[0].start ? 1 : weeks.length)
   const [open, setOpen] = useState<number>(current)
   const [menu, setMenu] = useState<string | null>(null)
   const markMap = new Map(marks.map((m) => [m.date, m]))
@@ -30,14 +31,14 @@ export function Schedule() {
 
   return (
     <div className="page">
-      <PageHeader eyebrow={`Minggu ${current} dari ${WEEKS.length}`} title="Jadwal">
-        <p className="lede">{PRIORITY_NOTE}</p>
+      <PageHeader eyebrow={`Minggu ${current} dari ${weeks.length}`} title="Jadwal">
+        <p className="lede">{priorityNote}</p>
         <p className="lede">{RUN_RULES}</p>
       </PageHeader>
-      {WEEKS.map((w) => {
+      {weeks.map((w) => {
         const st = stats.find((s) => s.no === w.no)!
         const isOpen = open === w.no
-        const days = SCHEDULE.filter((s) => s.date >= w.start && s.date <= w.end)
+        const days = schedule.filter((s) => s.date >= w.start && s.date <= w.end)
         return (
           <section key={w.no} className={`card week ${w.no === current ? 'current' : ''}`}>
             <button className="week-h" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? 0 : w.no)}>

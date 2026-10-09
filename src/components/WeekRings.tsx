@@ -1,7 +1,7 @@
 // "Minggu ini": tiga cincin konsentris (sesi, lari, gym) ala cincin aktivitas,
 // plus strip 7 hari Senin–Minggu. Cincin menggambar diri saat muncul.
 
-import { SCHEDULE } from '../data/plan'
+import { plan as activePlan } from '../data/plan'
 import { addDays, dayName, mondayOf, type ISODate } from '../lib/date'
 import { statusOf } from '../lib/stats'
 import type { GymLog, RunLog, SessionMark } from '../lib/types'
@@ -14,7 +14,7 @@ export function WeekRings({ t, runs, gym, marks }: { t: ISODate; runs: RunLog[];
   const mon = mondayOf(t)
   const days = Array.from({ length: 7 }, (_, i) => addDays(mon, i))
   const markMap = new Map(marks.map((m) => [m.date, m]))
-  const plan = SCHEDULE.filter((s) => s.date >= days[0] && s.date <= days[6])
+  const plan = activePlan().schedule.filter((s) => s.date >= days[0] && s.date <= days[6])
   if (!plan.length) return null
   const training = plan.filter((s) => s.kind !== 'rest')
   const done = training.filter((s) => statusOf(s, markMap, runs, gym) === 'done').length
@@ -24,7 +24,7 @@ export function WeekRings({ t, runs, gym, marks }: { t: ISODate; runs: RunLog[];
     { key: 'sesi', label: 'Sesi', value: done, goal: training.length, cls: 'r-sesi' },
     { key: 'lari', label: 'Lari', value: runsDone, goal: plan.filter((s) => RUN.has(s.kind)).length, cls: 'r-lari' },
     { key: 'gym', label: 'Gym', value: gymDone, goal: plan.filter((s) => GYM.has(s.kind)).length, cls: 'r-gym' },
-  ]
+  ].filter((r) => r.goal > 0 || r.value > 0)
 
   return (
     <section className="card week-rings" aria-label="Minggu ini">

@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { withViewTransition } from './motion'
 
-export type Route = 'hari-ini' | 'jadwal' | 'catat' | 'progres' | 'info'
-const ROUTES: Route[] = ['hari-ini', 'jadwal', 'catat', 'progres', 'info']
+export type Route = 'hari-ini' | 'jadwal' | 'catat' | 'progres' | 'info' | 'mulai'
+const ROUTES: Route[] = ['hari-ini', 'jadwal', 'catat', 'progres', 'info', 'mulai']
 
 /** Router hash sederhana: "#/catat?tab=gym&date=2026-10-05". Hash dipakai supaya jalan di hosting statis mana pun. */
 export function parseHash(hash: string): { route: Route; params: URLSearchParams } {

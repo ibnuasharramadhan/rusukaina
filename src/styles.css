@@ -479,3 +479,11 @@ details summary { cursor: pointer; font-weight: 600; }
   .chart .line { stroke-dashoffset: 0 !important; }
   .chart .dot, .chart .bar { opacity: 1 !important; }
 }
+
+/* Onboarding */
+.onboarding .page-h { margin-bottom: 4px; }
+.steps { display: flex; gap: 6px; margin-top: 12px; }
+.steps span { flex: 1; height: 4px; border-radius: 99px; background: var(--surface-2); transition: background 0.3s ease; }
+.steps span.on { background: var(--accent); animation: bar-grow 0.4s var(--ease-out) both; transform-origin: left; }
+.onboarding .seg button { min-width: 0; }
+.center { text-align: center; }

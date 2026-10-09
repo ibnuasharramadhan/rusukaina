@@ -15,7 +15,7 @@ export function StravaCard() {
   const [confirm, setConfirm] = useState(false)
   if (!stravaConfigured) return null
   return (
-    <Card title="Huawei Health › Strava">
+    <Card title="Sinkron Strava">
       {strava ? (
         <>
           <p className="small">
@@ -36,7 +36,7 @@ export function StravaCard() {
         </>
       ) : (
         <>
-          <p className="small">Lari dari jam Huawei bisa masuk otomatis lewat Strava. Di app Huawei Health: <b>Saya › Privasi › Berbagi data › Strava</b>, lalu hubungkan Strava di sini.</p>
+          <p className="small">Lari dari jam (Huawei, Garmin, Coros, dll.) bisa masuk otomatis lewat Strava. Contoh di app Huawei Health: <b>Saya › Privasi › Berbagi data › Strava</b>, lalu hubungkan Strava di sini.</p>
           <button className="btn primary" onClick={connectStrava}>Hubungkan Strava</button>
         </>
       )}

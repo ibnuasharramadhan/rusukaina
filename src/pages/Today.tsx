@@ -4,7 +4,7 @@ import { Icon } from '../components/icons'
 import { Card, CountUp, KIND, KindIcon, LEVEL_LABEL } from '../components/ui'
 import { WeekRings } from '../components/WeekRings'
 import { celebrate, originOf } from '../lib/motion'
-import { PLAN_END, PLAN_START, SCHEDULE, sessionOn, weekOf } from '../data/plan'
+import { plan, sessionOn, weekOf } from '../data/plan'
 import { downloadBackup } from '../lib/backup'
 import { addDays, diffDays, formatDate, toISO, today } from '../lib/date'
 import { setMark } from '../lib/db'
@@ -29,14 +29,15 @@ export function Today() {
   const markMap = new Map(marks.map((m) => [m.date, m]))
   const status = session ? statusOf(session, markMap, runs, gym) : null
   const lastRun = runs[runs.length - 1]
-  const upcoming = SCHEDULE.filter((s) => s.date > t && s.kind !== 'rest').slice(0, 3)
+  const { start: planStart, end: planEnd, schedule, weeks } = plan()
+  const upcoming = schedule.filter((s) => s.date > t && s.kind !== 'rest').slice(0, 3)
   const daysAfterRace = diffDays(profile.raceDate, t)
   const result = raceResult(runs, profile.raceDate)
   // Hasil race tampil sampai 2 minggu setelahnya; di hari H, kartu sesi sudah punya tombol "Catat lari".
   const showRace = daysAfterRace >= 0 && daysAfterRace <= 14 && (!!result || daysAfterRace > 0)
   const hasData = runs.length + daily.length + gym.length > 0
-  const planDays = diffDays(PLAN_START, PLAN_END)
-  const planPct = Math.min(1, Math.max(0, diffDays(PLAN_START, t) / planDays))
+  const planDays = diffDays(planStart, planEnd)
+  const planPct = Math.min(1, Math.max(0, diffDays(planStart, t) / planDays))
 
   async function mark(st: 'done' | 'skipped' | null, origin?: { x: number; y: number }) {
     if (st === 'done') celebrate(origin)
@@ -49,7 +50,7 @@ export function Today() {
       <header className="hero">
         <div className="hero-top">
           <div>
-            <p className="eyebrow">{formatDate(t, true)}{week ? ` · Minggu ${week.no}/10` : ''}</p>
+            <p className="eyebrow">{formatDate(t, true)}{week ? ` · Minggu ${week.no}/${weeks.length}` : ''}</p>
             <h1>Halo, {profile.name}</h1>
           </div>
           {daysToRace >= 0 && (
@@ -62,7 +63,7 @@ export function Today() {
         {daysToRace >= 0 && (
           <div className="plan-bar" aria-hidden>
             <div className="plan-track"><div className="plan-fill" style={{ width: `${planPct * 100}%` }} /></div>
-            <div className="plan-ends"><span>{formatDate(PLAN_START)}</span><span><Icon name="flag" size={12} /> {profile.raceName} · {formatDate(profile.raceDate)}</span></div>
+            <div className="plan-ends"><span>{formatDate(planStart)}</span><span><Icon name="flag" size={12} /> {profile.raceName} · {formatDate(profile.raceDate)}</span></div>
           </div>
         )}
       </header>
@@ -80,7 +81,7 @@ export function Today() {
         <TodaySession session={session} easyCap={profile.easyCap} canTrain={r.level === 'unknown' || r.canTrain} noStrides={r.noStrides} status={status} onMark={mark} ruleWarnings={runRuleWarnings(t, runs)} />
       ) : (
         <Card title="Hari ini">
-          <p>{t < PLAN_START ? `Program mulai ${formatDate(PLAN_START)}.` : t > PLAN_END ? 'Program menuju UI Ultra sudah selesai. Saatnya rencana berikutnya bersama coach.' : 'Tidak ada sesi.'}</p>
+          <p>{t < planStart ? `Program mulai ${formatDate(planStart)}.` : t > planEnd ? `Program menuju ${profile.raceName} sudah selesai. Saatnya menyusun rencana berikutnya.` : 'Tidak ada sesi.'}</p>
         </Card>
       )}
 
