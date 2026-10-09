@@ -100,13 +100,34 @@ export interface Profile {
   raceName: string
   /** Punya tensimeter: tampilkan input & grafik tensi. Default mati. */
   trackBp: boolean
+  /** Nama obat tensi yang diminum rutin (mis. "Amlodipin"); kosong = tidak ada. */
+  medName?: string
+  /** Sumber rencana. Kosong = profil lama milik Ibnu (preset). */
+  plan?: PlanSource
+}
+
+/** Rencana dari preset coach, atau disusun otomatis dari jawaban onboarding. */
+export type PlanSource = { kind: 'preset'; id: 'ibnu-ui7k' } | { kind: 'generated'; input: PlanInput }
+
+export interface PlanInput {
+  /** Hari pertama rencana. */
+  start: ISODate
+  raceDate: ISODate
+  raceName: string
+  raceKm: number
+  /** Lari nonstop terlama saat ini, dalam menit. */
+  currentMin: number
+  runsPerWeek: 2 | 3
+  /** Hari long run: 6 = Sabtu, 0 = Minggu. */
+  longDay: 0 | 6
+  gymPerWeek: 0 | 1 | 2
 }
 
 export interface ExportFile {
   app: 'pwa-latihan'
   schemaVersion: 1
   exportedAt: string
-  profile: Profile
+  profile?: Profile
   runs: RunLog[]
   daily: DailyLog[]
   gym: GymLog[]

@@ -1,4 +1,4 @@
-import { MAX_RUNS_PER_WEEK, SCHEDULE, sessionOn, weekOf, WEEKS } from '../data/plan'
+import { MAX_RUNS_PER_WEEK, plan, sessionOn, weekOf } from '../data/plan'
 import { addDays, formatDate, type ISODate } from './date'
 import { formatDuration, formatPace, paceSecPerKm } from './pace'
 import { bpLevel } from './safety'
@@ -43,16 +43,16 @@ export function runRuleWarnings(date: ISODate, runs: RunLog[]): string[] {
 /** Sesi latihan yang sudah lewat (sampai `until`) dan berapa yang selesai. */
 export function adherence(runs: RunLog[], gym: GymLog[], marks: SessionMark[], until: ISODate): { planned: number; done: number } {
   const markMap = new Map(marks.map((m) => [m.date, m]))
-  const past = SCHEDULE.filter((s) => isTraining(s) && s.date <= until)
+  const past = plan().schedule.filter((s) => isTraining(s) && s.date <= until)
   return { planned: past.length, done: past.filter((s) => statusOf(s, markMap, runs, gym) === 'done').length }
 }
 
 export function weekStats(runs: RunLog[], gym: GymLog[], marks: SessionMark[]): WeekStat[] {
   const markMap = new Map(marks.map((m) => [m.date, m]))
-  return WEEKS.map((w) => {
+  return plan().weeks.map((w) => {
     const inWeek = (d: ISODate) => d >= w.start && d <= w.end
     const wr = runs.filter((r) => inWeek(r.date))
-    const sessions = SCHEDULE.filter((s) => inWeek(s.date) && isTraining(s))
+    const sessions = plan().schedule.filter((s) => inWeek(s.date) && isTraining(s))
     return {
       no: w.no,
       start: w.start,

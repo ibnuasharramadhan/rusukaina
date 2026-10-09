@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { PLAN_END, SCHEDULE, sessionOn, WEEKS } from '../data/plan'
+import { sessionOn } from '../data/plan'
+import { IBNU_PLAN } from '../data/presets/ibnu'
 import { addDays, dayName, mondayOf } from '../lib/date'
 import { formatPace, metersPerBeat, paceSecPerKm, parseDuration } from '../lib/pace'
 import { bpLevel, readiness, restingHrVerdict, runFlags } from '../lib/safety'
 import { adherence, backupDue, coachSummary, raceResult, runRuleWarnings, statusOf, weekStats } from '../lib/stats'
 import { karvonenZones, mafHr, ageOn } from '../lib/zones'
 import type { RunLog } from '../lib/types'
+
+
+const { schedule: SCHEDULE, weeks: WEEKS, end: PLAN_END } = IBNU_PLAN
 
 describe('pace', () => {
   it('parse durasi', () => {

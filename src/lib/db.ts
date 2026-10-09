@@ -1,5 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import { DEFAULT_PROFILE } from '../data/plan'
+import { LEGACY_PROFILE } from '../data/plan'
 import type { DailyLog, ExportFile, GymLog, Profile, RunLog, SessionMark } from './types'
 
 interface LatihanDB extends DBSchema {
@@ -86,9 +86,18 @@ export async function setMark(m: SessionMark | { date: string; status: null }) {
 }
 
 // --- Profil
-export async function getProfile(): Promise<Profile> {
-  const p = (await (await db()).get('meta', 'profile')) as Partial<Profile> | undefined
-  return { ...DEFAULT_PROFILE, ...p }
+/**
+ * Profil tersimpan. Profil tanpa `plan` (dibuat sebelum ada onboarding) dan HP
+ * yang sudah punya data tapi belum punya profil adalah milik Ibnu (preset).
+ * null = HP baru, perlu onboarding.
+ */
+export async function getProfile(): Promise<Profile | null> {
+  const d = await db()
+  const p = (await d.get('meta', 'profile')) as Partial<Profile> | undefined
+  if (p?.plan) return p as Profile
+  if (p) return { ...LEGACY_PROFILE, ...p, plan: LEGACY_PROFILE.plan }
+  const hasData = (await d.get('meta', 'seeded')) || (await d.count('runs')) + (await d.count('daily')) + (await d.count('gym')) + (await d.count('marks')) > 0
+  return hasData ? LEGACY_PROFILE : null
 }
 export async function saveProfile(p: Profile) {
   await (await db()).put('meta', p, 'profile')
@@ -102,31 +111,13 @@ export async function markExported(at = Date.now()) {
   await (await db()).put('meta', at, 'lastExportAt')
 }
 
-// --- Data awal: lari 1 Okt dan tensi 29 Sep dari catatan coach.
-export async function seedIfEmpty() {
-  const d = await db()
-  if (await d.get('meta', 'seeded')) return
-  const now = Date.now()
-  const tx = d.transaction(['runs', 'daily', 'meta'], 'readwrite')
-  await tx.objectStore('runs').put({
-    id: 'seed-2026-10-01', date: '2026-10-01', time: '17:42', type: 'treadmill',
-    distanceKm: 5.15, durationSec: 36 * 60 + 2, avgHr: 148, maxHr: 159, cadence: 163,
-    splits: '7:16, 6:46, 7:01, 6:56, 7:01',
-    notes: 'Lari treadmill pertama. HR stabil, tapi ±25 menit di atas 145.',
-    createdAt: now, updatedAt: now,
-  })
-  await tx.objectStore('daily').put({ date: '2026-09-29', restingHr: 58, sys: 148, dia: 83, medTaken: true, updatedAt: now })
-  await tx.objectStore('meta').put(true, 'seeded')
-  await tx.done
-}
-
 // --- Ekspor / impor
 export async function exportAll(): Promise<ExportFile> {
   return {
     app: 'pwa-latihan',
     schemaVersion: 1,
     exportedAt: new Date().toISOString(),
-    profile: await getProfile(),
+    profile: (await getProfile()) ?? undefined,
     runs: await listRuns(),
     daily: await listDaily(),
     gym: await listGym(),
@@ -172,7 +163,6 @@ export async function importAll(raw: unknown, opts: { includeProfile?: boolean }
   await merge('gym', f.gym, (v) => v.id)
   await merge('marks', f.marks, (v) => v.date)
   if (opts.includeProfile && f.profile) await tx.objectStore('meta').put(f.profile, 'profile')
-  await tx.objectStore('meta').put(true, 'seeded')
   await tx.done
   return res
 }
@@ -184,6 +174,5 @@ export async function wipeAll() {
     tx.objectStore('runs').clear(), tx.objectStore('daily').clear(), tx.objectStore('gym').clear(),
     tx.objectStore('marks').clear(), tx.objectStore('meta').clear(),
   ])
-  await tx.objectStore('meta').put(true, 'seeded')
   await tx.done
 }

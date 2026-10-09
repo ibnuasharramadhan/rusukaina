@@ -29,7 +29,7 @@ export function DailyForm({ date, compact, onSaved }: { date: string; compact?: 
     if (hr != null && (hr < 30 || hr > 130)) return setErr('HR istirahat tidak masuk akal.')
     const entry: DailyLog = {
       date, sys, dia, restingHr: hr, sleepHours: num(f.sleepHours),
-      sysPm: num(f.sysPm), diaPm: num(f.diaPm), medTaken: f.medTaken,
+      sysPm: num(f.sysPm), diaPm: num(f.diaPm), medTaken: profile.medName ? f.medTaken : undefined,
       symptoms: f.symptoms.trim() || undefined, notes: f.notes.trim() || undefined, updatedAt: Date.now(),
     }
     await saveDaily(entry)
@@ -45,7 +45,7 @@ export function DailyForm({ date, compact, onSaved }: { date: string; compact?: 
           <div className="row3">
             <Field label="Sistolik"><input inputMode="numeric" value={f.sys} onChange={set('sys')} placeholder="148" /></Field>
             <Field label="Diastolik"><input inputMode="numeric" value={f.dia} onChange={set('dia')} placeholder="83" /></Field>
-            <Field label="HR istirahat"><input inputMode="numeric" value={f.restingHr} onChange={set('restingHr')} placeholder="58" /></Field>
+            <Field label="HR istirahat"><input inputMode="numeric" value={f.restingHr} onChange={set('restingHr')} placeholder={String(profile.restingHrBaseline)} /></Field>
           </div>
           <div className="row3">
             <Field label="Tidur (jam)"><input inputMode="decimal" value={f.sleepHours} onChange={set('sleepHours')} placeholder="7" /></Field>
@@ -55,11 +55,11 @@ export function DailyForm({ date, compact, onSaved }: { date: string; compact?: 
         </>
       ) : (
         <div className="row2">
-          <Field label="HR istirahat"><input inputMode="numeric" value={f.restingHr} onChange={set('restingHr')} placeholder="58" /></Field>
+          <Field label="HR istirahat"><input inputMode="numeric" value={f.restingHr} onChange={set('restingHr')} placeholder={String(profile.restingHrBaseline)} /></Field>
           <Field label="Tidur (jam)"><input inputMode="decimal" value={f.sleepHours} onChange={set('sleepHours')} placeholder="7" /></Field>
         </div>
       )}
-      <label className="check"><input type="checkbox" checked={f.medTaken} onChange={set('medTaken')} /> Amlodipin sudah diminum</label>
+      {profile.medName && <label className="check"><input type="checkbox" checked={f.medTaken} onChange={set('medTaken')} /> {profile.medName} sudah diminum</label>}
       {!compact && (
         <>
           <Field label="Keluhan (kalau ada)"><input value={f.symptoms} onChange={set('symptoms')} placeholder="pusing, bengkak pergelangan kaki, ..." /></Field>
@@ -68,7 +68,7 @@ export function DailyForm({ date, compact, onSaved }: { date: string; compact?: 
       )}
       <p className="hint">{bp
         ? 'Ukur pagi sebelum obat & kopi, duduk tenang 5 menit, 2x dengan jeda 1 menit (isi rata-ratanya).'
-        : 'HR istirahat: lihat di Huawei Band saat baru bangun.'}</p>
+        : 'HR istirahat: lihat di jam/band saat baru bangun.'}</p>
       {err && <p className="error" role="alert">{err}</p>}
       <button className="btn primary" type="submit">Simpan</button>
     </form>

@@ -32,7 +32,7 @@ export function bpVerdict(sys?: number, dia?: number): Verdict {
     case 'yellow':
       return {
         level: 'yellow', title: 'Boleh latihan, versi aman',
-        advice: [`Tensi ${sys}/${dia} di 140–159 / 90–99.`, 'Jangan naikkan beban gym.', 'Tanpa strides.', 'Patuhi HR ≤145.'],
+        advice: [`Tensi ${sys}/${dia} di 140–159 / 90–99.`, 'Jangan naikkan beban gym.', 'Tanpa strides.', 'Patuhi batas HR easy.'],
       }
     case 'green':
       return { level: 'green', title: 'Latihan sesuai rencana', advice: [`Tensi ${sys}/${dia} < 140/90.`] }
@@ -41,7 +41,7 @@ export function bpVerdict(sys?: number, dia?: number): Verdict {
   }
 }
 
-/** HR istirahat naik >7 bpm dari biasanya (baseline 58 → ≥65) = kurang pulih. */
+/** HR istirahat naik >7 bpm dari biasanya (mis. biasanya 58 → ≥65) = kurang pulih. */
 export function restingHrVerdict(hr: number | undefined, baseline: number): Verdict {
   if (!hr) return { level: 'unknown', title: 'HR istirahat belum dicatat', advice: [] }
   const limit = baseline + 7

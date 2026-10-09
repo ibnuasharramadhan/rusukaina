@@ -1,6 +1,6 @@
 import { BarChart, LineChart } from '../components/charts'
 import { Card, PageHeader, Stat } from '../components/ui'
-import { weekOf } from '../data/plan'
+import { plan, weekOf } from '../data/plan'
 import { addDays, today } from '../lib/date'
 import { formatPace, metersPerBeat, paceSecPerKm } from '../lib/pace'
 import { adherence, bpAverage, weekStats } from '../lib/stats'
@@ -23,7 +23,7 @@ export function Progress() {
 
   return (
     <div className="page">
-      <PageHeader eyebrow={currentNo ? `Minggu ${currentNo} dari 10` : 'Ringkasan'} title="Progres" />
+      <PageHeader eyebrow={currentNo ? `Minggu ${currentNo} dari ${plan().weeks.length}` : 'Ringkasan'} title="Progres" />
       <div className="stats grid4">
         <Stat label="Total jarak" value={`${totalKm.toFixed(1).replace('.', ',')} km`} sub={`${runs.length} lari`} />
         <Stat label="Sesi gym" value={gym.length} />

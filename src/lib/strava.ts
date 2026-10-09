@@ -6,7 +6,7 @@
 // token disimpan di IndexedDB perangkat ini. Panggilan API berikutnya langsung
 // dari browser ke api.strava.com.
 
-import { PLAN_START } from '../data/plan'
+import { plan } from '../data/plan'
 import { fromISO } from './date'
 import { db, saveRun } from './db'
 import { formatPace } from './pace'
@@ -186,7 +186,7 @@ export async function syncStrava(existing: RunLog[]): Promise<SyncResult> {
   auth = await accessToken(auth)
 
   // Mundur 2 hari dari sinkron terakhir supaya aktivitas yang telat sinkron dari Huawei tetap terambil.
-  const after = auth.lastSyncAt ? auth.lastSyncAt - 2 * 86400 : Math.floor(fromISO(PLAN_START).getTime() / 1000)
+  const after = auth.lastSyncAt ? auth.lastSyncAt - 2 * 86400 : Math.floor(fromISO(plan().start).getTime() / 1000)
   const activities: StravaActivity[] = []
   for (let page = 1; page <= 5; page++) {
     const batch = await api<StravaActivity[]>(auth, `/athlete/activities?after=${after}&per_page=100&page=${page}`)
