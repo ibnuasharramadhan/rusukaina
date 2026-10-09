@@ -1,4 +1,4 @@
-# Latihan 7K: PWA pelatih lari & gym
+# Rusukaina: PWA pelatih lari & gym
 
 Aplikasi web progresif (PWA) untuk menjalankan program latihan 10 minggu menuju **UI Ultra 7K (5 Des 2026)**: jadwal harian, log lari dan gym, catatan tensi & HR istirahat dengan aturan keamanan hipertensi, zona HR, dan grafik progres. Bisa dipasang di layar utama HP tanpa Play Store / App Store dan tetap jalan tanpa internet.
 
