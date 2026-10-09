@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { DailyForm } from '../components/DailyForm'
 import { Icon } from '../components/icons'
 import { Card, Field, LevelBadge, num, PageHeader, Segmented } from '../components/ui'
 import { GYM, GYM_RULES } from '../data/gym'
 import { sessionOn } from '../data/plan'
+import { importActivityFiles } from '../lib/activityFile'
 import { formatDate, today } from '../lib/date'
 import { deleteDaily, deleteGym, deleteRun, saveGym, saveRun, uid } from '../lib/db'
 import { formatDuration, formatPace, paceSecPerKm, parseDuration } from '../lib/pace'
@@ -137,6 +138,7 @@ function RunSection({ params }: { params: URLSearchParams }) {
         )}
       </Card>
       <Card title="Riwayat lari & jalan" action={strava ? <button className="link small" onClick={syncStrava} disabled={stravaBusy}>{stravaBusy ? 'Menyinkronkan…' : 'Sinkron Strava'}</button> : undefined}>
+        <FileImport existing={all} onDone={refresh} />
         {!all.length && <p className="muted">Belum ada lari tercatat.</p>}
         <ul className="history">
           {[...all].reverse().map((r) => (
@@ -155,6 +157,40 @@ function RunSection({ params }: { params: URLSearchParams }) {
         </ul>
       </Card>
     </>
+  )
+}
+
+/** Impor lari/jalan dari file ekspor jam (GPX, TCX, FIT), bisa beberapa sekaligus. */
+function FileImport({ existing, onDone }: { existing: RunLog[]; onDone: () => Promise<void> }) {
+  const ref = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<string[]>([])
+  async function run(files: File[], origin: { x: number; y: number } | undefined) {
+    setBusy(true)
+    const res = await importActivityFiles(files, existing, saveRun)
+    setBusy(false)
+    if (ref.current) ref.current.value = ''
+    await onDone()
+    if (res.added.length && origin) celebrate(origin)
+    setMsg([
+      res.added.length ? `${res.added.length} aktivitas masuk: ${res.added.map((r) => `${formatDate(r.date, true)} ${TYPE_LABEL[r.type]} ${String(r.distanceKm).replace('.', ',')} km`).join('; ')}.` : 'Tidak ada aktivitas baru.',
+      ...res.skipped.map((s) => `${s.name}: ${s.reason.replace(/\.$/, '')}.`),
+    ])
+  }
+  return (
+    <div className="file-import">
+      <p className="small muted">Punya file dari jam (Garmin, Coros, Huawei, dll.)? Impor file <b>.gpx</b>, <b>.tcx</b>, atau <b>.fit</b>; jarak, durasi, HR, dan split terisi otomatis.</p>
+      <button className="btn small" disabled={busy} onClick={() => ref.current?.click()}>
+        <Icon name="plus" size={16} /> {busy ? 'Membaca file…' : 'Impor file jam'}
+      </button>
+      <input ref={ref} type="file" multiple accept=".gpx,.tcx,.fit,application/gpx+xml,application/vnd.garmin.tcx+xml" hidden
+        onChange={(e) => {
+          const files = [...(e.target.files ?? [])]
+          const b = ref.current?.previousElementSibling?.getBoundingClientRect()
+          if (files.length) run(files, b && { x: b.left + b.width / 2, y: b.top + b.height / 2 })
+        }} />
+      {msg.length > 0 && <div role="status" className="small">{msg.map((m) => <p key={m}>{m}</p>)}</div>}
+    </div>
   )
 }
 

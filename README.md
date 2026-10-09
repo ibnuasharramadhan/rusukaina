@@ -76,6 +76,14 @@ di frontend. Token disimpan di IndexedDB; aktivitas diambil langsung dari Strava
 dipetakan ke format log lari (HR, cadence, split per km), dan duplikat dengan catatan manual
 dilewati. Setup: [docs/strava-setup.md](docs/strava-setup.md).
 
+## Impor file jam (GPX, TCX, FIT)
+
+Tanpa Strava, lari atau jalan bisa diimpor dari file ekspor jam/aplikasi (Garmin, Coros, Huawei, dll.)
+di tab Catat › *Impor file jam*, beberapa file sekaligus. Parser ada di `src/lib/activityFile.ts`, tanpa
+library: GPX dan TCX dibaca sebagai XML, FIT dibaca langsung dari format binernya (pesan `session` dan
+`record`). Jarak, durasi, HR, cadence, dan split per km terisi otomatis; aktivitas tanpa GPS dicatat
+sebagai treadmill, dan yang sudah tercatat dilewati.
+
 ## Data & sinkron dengan coach
 
 Semua data tinggal di perangkat (IndexedDB) dan aplikasi meminta penyimpanan persisten. Untuk berbagi:
@@ -91,7 +99,6 @@ Format ekspor (`schemaVersion: 1`):
 ## Rencana berikutnya
 
 - Sinkron otomatis antar perangkat / dengan coach lewat backend kecil (mis. Supabase atau Cloudflare D1 + Workers), memakai format ekspor di atas sebagai kontrak data.
-- Impor otomatis dari Strava / Huawei Health (GPX/FIT).
 - Pengingat ukur tensi lewat Web Push.
 - Rencana blok berikutnya setelah UI Ultra (menuju 5K sub 35 → sub 30).
 
