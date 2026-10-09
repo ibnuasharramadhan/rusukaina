@@ -1,56 +1,134 @@
-# Rusukaina: PWA pelatih lari & gym
+# Rusukaina
 
 [![CI](https://github.com/ibnuasharramadhan/rusukaina/actions/workflows/ci.yml/badge.svg)](https://github.com/ibnuasharramadhan/rusukaina/actions/workflows/ci.yml)
 
-Aplikasi web progresif (PWA) untuk menjalankan program latihan 10 minggu menuju **UI Ultra 7K (5 Des 2026)**: jadwal harian, log lari dan gym, catatan tensi & HR istirahat dengan aturan keamanan hipertensi, zona HR, dan grafik progres. Bisa dipasang di layar utama HP tanpa Play Store / App Store dan tetap jalan tanpa internet.
+**Pelatih lari & gym di saku, yang tahu kapan harus bilang "hari ini jalan santai saja".**
+PWA offline-first untuk menjalankan program latihan menuju race: jadwal harian, cek kesiapan pagi,
+log lari/gym, impor file jam, grafik progres, dan kartu share. Tanpa server, tanpa akun.
 
-> Dibuat untuk satu atlet dengan hipertensi terkontrol obat. Aplikasi ini alat bantu catatan, bukan alat medis.
+**[Coba langsung →](https://ibnuasharramadhan.github.io/rusukaina/)** · bisa dipasang ke layar utama HP dan jalan tanpa internet.
 
-## Fitur
+<p align="center">
+  <img src="docs/screens/demo.gif" width="300" alt="Demo: dari Hari ini, catat long run, lalu bagikan kartu hasil">
+</p>
 
-| Layar | Isi |
+<p align="center">
+  <img src="docs/screens/light-hari-ini.webp" width="200" alt="Hari ini: cek kesiapan dan sesi hari ini">
+  <img src="docs/screens/jadwal.webp" width="200" alt="Jadwal mingguan dengan status tiap sesi">
+  <img src="docs/screens/progres.webp" width="200" alt="Grafik HR istirahat dan pace">
+  <img src="docs/screens/share.webp" width="200" alt="Kartu share hasil lari">
+</p>
+
+<sub>Screenshot memakai data demo fiktif.</sub>
+
+## Latar belakang
+
+Rusukaina lahir dari kebutuhan nyata: seorang pelari pemula dengan hipertensi terkontrol obat
+berlatih menuju race 7K, dengan rencana dari coach dan aturan keamanan yang ketat (batas tensi,
+batas HR easy, tidak boleh lari dua hari berturut-turut). Aplikasi lari yang ada mencatat
+*apa yang sudah terjadi*; yang dibutuhkan adalah sesuatu yang membaca kondisi pagi ini dan
+menyesuaikan *apa yang boleh dilakukan hari ini*.
+
+Setelah dipakai sendiri, aplikasi dibuka untuk beberapa teman lari: mereka mengisi onboarding
+singkat dan mendapat rencana yang disusun otomatis dengan aturan yang sama.
+
+## Yang bisa dilakukan
+
+| | |
 |---|---|
-| **Hari ini** | Hitung mundur ke race, hasil race (2 minggu setelahnya), pengingat cadangan bila >7 hari belum ekspor, **cek kesiapan** (tensi, HR istirahat, tidur → hijau / kuning / merah), sesi hari ini yang otomatis disesuaikan (mis. strides dicoret saat tensi 140–159), lari terakhir + catatan coach otomatis, 3 sesi berikutnya, tanda bahaya. |
-| **Jadwal** | 10 minggu × 7 hari dari rencana coach, minggu berjalan terbuka otomatis, status per sesi (selesai / diganti / dilewati), progres `selesai/rencana` per minggu. |
-| **Catat** | Lari (jarak, durasi, pace live, HR rata/maks + zona, cadence, split), Gym A/B (beban per latihan, tombol set, timer istirahat 60/90", saran naik beban setelah 2 sesi "ringan" berturut-turut, diblok saat tensi kuning), Tensi & HR harian. |
-| **Progres** | Konsistensi, tensi pagi dengan garis 140/160, HR istirahat, pace, HR saat lari vs batas 145, **efisiensi aerobik (meter per detak)**, sesi & km per minggu. Semua grafik punya tooltip dan tampilan tabel. |
-| **Info** | Zona HR Karvonen (dihitung dari profil), aturan tensi, panduan gym, strategi race, ekspor/impor data, profil. |
+| **Cek kesiapan pagi** | HR istirahat, tidur, tensi (opsional), dan nyeri → hijau / kuning / merah. Sesi hari ini ikut menyesuaikan, misalnya strides dicoret atau lari diganti jalan santai. |
+| **Rencana otomatis** | Onboarding 3 langkah → rencana sampai hari race: long run naik ±10% per minggu, deload tiap minggu ke-4, taper, maks 3 lari per minggu, tidak pernah 2 hari berturut-turut. |
+| **Catat** | Lari dan jalan kaki (pace live, zona HR, split, sepatu), Gym A/B dengan saran naik beban, HR istirahat, tidur, dan nyeri. |
+| **Impor dari jam** | File **GPX, TCX, FIT** (Garmin, Coros, Huawei, dll.), beberapa sekaligus, atau sinkron otomatis lewat Strava. |
+| **Progres** | Konsistensi, HR istirahat, pace, HR saat lari vs batas easy, efisiensi aerobik (meter per detak), km per minggu. Setiap grafik punya tooltip dan tampilan tabel. |
+| **Kartu share** | Gambar 4:5 siap IG/WA: jarak, pace, HR, split per km, dan progres menuju race. |
+| **Sepatu** | Km per sepatu dan pengingat ganti di 90% batas. |
+| **Ringkasan untuk coach** | Teks 7 hari siap tempel ke chat, plus ekspor/impor JSON untuk cadangan dan pindah HP. |
 
-### Aturan keamanan yang dikodekan (`src/lib/safety.ts`)
-- Tensi < 140/90 → sesuai rencana. 140–159 / 90–99 → boleh, tapi tanpa naik beban, tanpa strides, HR ≤145. ≥160/100 → jangan latihan. ≥180/110 → hubungi dokter.
-- HR istirahat ≥ baseline + 7 (58 → 65) → ganti jalan santai.
-- Tidur < 6 jam → jalan kaki atau skip.
-- Lari easy dengan HR rata-rata > 145 diberi peringatan "terlalu cepat".
-- Nyeri (`src/lib/body.ts`): skala 1–3 dipantau, 4–5 → latihan lebih ringan, ≥6 atau di tempat yang sama 3 hari dalam seminggu → istirahatkan lari dan periksakan.
+<p align="center">
+  <img src="docs/screens/onboarding.webp" width="200" alt="Onboarding: target race">
+  <img src="docs/screens/hari-ini-minggu.webp" width="200" alt="Cincin minggu ini dan lari terakhir">
+  <img src="docs/screens/catat.webp" width="200" alt="Form catat lari">
+  <img src="docs/screens/dark-hari-ini.webp" width="200" alt="Mode gelap">
+</p>
 
-### Sepatu
-Daftar sepatu di Info (km awal + semua lari yang memakainya, batas ganti default 700 km). Pengingat muncul di Hari ini saat sepatu aktif mencapai 90% batas. Sepatu ikut ekspor/impor JSON (`shoes`, opsional supaya file lama tetap valid).
+## Keputusan teknis
+
+**Offline-first tanpa backend.** Semua data ada di IndexedDB perangkat. Untuk fase "beberapa teman"
+tidak perlu akun, server, atau biaya. Data health tidak pernah keluar dari HP kecuali pengguna
+mengekspornya sendiri. Ekspor/impor menggabungkan data per entri (yang `updatedAt`-nya lebih baru
+menang), jadi format ekspor sudah siap dipakai sebagai kontrak data kalau nanti ada sinkron server.
+
+**Aturan keamanan sebagai fungsi murni.** Kesiapan (`src/lib/safety.ts`), nyeri (`src/lib/body.ts`),
+dan aturan lari (`src/lib/stats.ts`) adalah fungsi tanpa efek samping yang dites unit. Aturan untuk
+hipertensi hanya berlaku bila profil memang minum obat tensi, jadi teman tanpa hipertensi tidak ikut
+dibatasi. Nyeri tidak pernah menutupi peringatan tensi kritis.
+
+**Parser FIT tanpa library.** `src/lib/activityFile.ts` membaca format biner FIT langsung
+(definition/data message, header timestamp terkompresi, nilai invalid per base type), plus GPX/TCX
+lewat XML. Hasilnya hanya ~300 baris dan tidak menambah dependensi.
+
+**Grafik dan kartu share tanpa library.** Grafik SVG buatan sendiri (`src/components/charts.tsx`) dan
+kartu share digambar ke `<canvas>` (`src/lib/shareCard.ts`), lalu dibagikan lewat Web Share API
+dengan file, atau diunduh sebagai PNG. Seluruh JS ~107 kB gzip, termasuk React.
+
+**Generator rencana yang bisa dibuktikan.** `src/data/generator.ts` menghasilkan jadwal dari jawaban onboarding,
+dan tesnya memeriksa invarian untuk berbagai kombinasi: tepat satu sesi per hari, tidak ada lari 2 hari
+berturut-turut, maks 3 lari per minggu, kenaikan long run ≤10% (min 5 menit), dan taper lebih pendek
+dari puncak.
+
+**Strava tanpa membocorkan secret.** OAuth memakai Cloudflare Worker kecil (`worker/`) hanya untuk
+menukar token. Panggilan API berikutnya langsung dari browser. Lihat
+[docs/strava-setup.md](docs/strava-setup.md).
+
+**Gerak yang menghormati pengguna.** View Transitions API untuk perpindahan layar, angka yang
+menghitung naik, cincin mingguan, dan konfeti saat sesi selesai. Semuanya mati bila
+`prefers-reduced-motion` aktif.
+
+```mermaid
+flowchart LR
+  subgraph HP["HP pengguna (PWA)"]
+    UI["React 19 UI"] --> Store["store.tsx"]
+    Store --> Rules["safety · body · stats<br/>(fungsi murni)"]
+    Store --> DB[("IndexedDB")]
+    Files["GPX / TCX / FIT"] --> Parser["activityFile.ts"] --> DB
+  end
+  Strava["Strava API"] --> Store
+  Worker["Cloudflare Worker<br/>(tukar token)"] -.-> Strava
+  DB --> Export["Ekspor JSON /<br/>ringkasan coach"]
+```
+
+## Kualitas
+
+- **81 tes** (Vitest + `fake-indexeddb`): aturan keamanan, generator rencana, parser GPX/TCX/FIT (termasuk file FIT sintetis), sinkron Strava, IndexedDB, dan ekspor/impor.
+- **CI di setiap PR**: typecheck, tes, dan build. Deploy ke GitHub Pages otomatis dari `master`.
+- **Aksesibilitas**: 0 pelanggaran axe-core di semua layar (terang dan gelap, lebar 360 px). Setiap grafik juga punya tampilan tabel.
+- **TypeScript strict** di seluruh kode.
 
 ## Teknologi
 
-- **Vite + React 19 + TypeScript** (strict).
-- **vite-plugin-pwa / Workbox**: manifest, service worker precache, prompt "versi baru tersedia".
-- **IndexedDB** lewat `idb`: data offline-first di perangkat, tanpa backend, tanpa akun.
-- **Font Barlow / Barlow Condensed** di-bundle (tetap tampil offline) dan **ikon SVG sendiri** (`src/components/icons.tsx`), bukan emoji.
-- **Grafik SVG buatan sendiri** (`src/components/charts.tsx`), tanpa library chart: bundel tetap kecil (~90 kB gzip total).
-- **Vitest** + `fake-indexeddb`: 40 tes untuk aturan keamanan, sinkron Strava, zona HR (dicocokkan dengan tabel di rencana), jadwal, statistik, dan ekspor/impor.
-- Router hash sederhana supaya bisa dihosting di hosting statis mana pun (GitHub Pages, Netlify, Vercel, Cloudflare Pages).
-- Mode gelap mengikuti sistem.
+Vite · React 19 · TypeScript · vite-plugin-pwa (Workbox) · idb · Vitest · GitHub Actions · Cloudflare Workers (opsional, untuk Strava).
+Font Barlow di-bundle supaya tetap tampil offline, dan ikonnya SVG buatan sendiri.
 
 ## Struktur
 
 ```
 src/
-  data/plan.ts      Rencana 10 minggu (satu-satunya sumber jadwal)
-  data/gym.ts       Program Gym A/B
-  lib/safety.ts     Aturan tensi, HR istirahat, tidur → kesiapan
-  lib/zones.ts      Zona Karvonen, MAF, umur
-  lib/pace.ts       Parse durasi, pace, meter per detak
-  lib/stats.ts      Status sesi, statistik mingguan, ringkasan untuk coach
-  lib/db.ts         IndexedDB: CRUD, seed, ekspor/impor (merge by updatedAt)
-  lib/store.tsx     Context React untuk data
-  pages/            Today, Schedule, Log, Progress, Info
-  components/       UI kecil, grafik, prompt update PWA
+  data/generator.ts      Rencana otomatis dari jawaban onboarding
+  data/presets/ibnu.ts   Rencana dari coach (preset) + revisi per tanggal
+  data/plan.ts           Rencana aktif: plan(), sessionOn(), weekOf()
+  data/gym.ts            Program Gym A/B
+  lib/safety.ts          Kesiapan: tensi, HR istirahat, tidur (+ nyeri)
+  lib/body.ts            Aturan nyeri, km sepatu
+  lib/stats.ts           Status sesi, statistik, aturan lari, ringkasan coach
+  lib/activityFile.ts    Parser GPX / TCX / FIT
+  lib/shareCard.ts       Kartu share (canvas)
+  lib/strava.ts          OAuth + sinkron Strava
+  lib/db.ts              IndexedDB, ekspor/impor
+  lib/motion.ts          View Transitions, hitung naik, konfeti
+  pages/                 Today, Schedule, Log, Progress, Info, Onboarding
+  components/            UI, grafik, kartu sepatu, lembar share
+worker/                  Cloudflare Worker untuk token Strava
 ```
 
 ## Menjalankan
@@ -59,52 +137,26 @@ src/
 npm install
 npm run dev        # http://localhost:5173
 npm test           # vitest
-npm run build      # output di dist/ (termasuk sw.js dan manifest)
+npm run build      # dist/ (termasuk sw.js dan manifest)
 npm run preview    # uji build + service worker
 ```
 
-Service worker hanya aktif di `npm run preview` atau setelah deploy (butuh HTTPS atau localhost).
-
-## Memasang di HP
-
-1. Deploy `dist/` ke hosting statis berbasis HTTPS (contoh: GitHub Pages).
-2. Buka URL-nya di HP.
-   - **Android/Chrome:** menu ⋮ › *Tambahkan ke layar utama* (atau tombol *Pasang aplikasi* di tab Info).
-   - **iPhone/Safari:** tombol Bagikan › *Tambah ke Layar Utama*.
-
-## Sinkron Huawei Health (lewat Strava)
-
-Lari dari jam Huawei masuk otomatis: Huawei Health → Strava → aplikasi. OAuth Strava memakai
-Cloudflare Worker kecil (`worker/`) untuk menukar token, karena `client_secret` tidak boleh ada
-di frontend. Token disimpan di IndexedDB; aktivitas diambil langsung dari Strava API di browser,
-dipetakan ke format log lari (HR, cadence, split per km), dan duplikat dengan catatan manual
-dilewati. Setup: [docs/strava-setup.md](docs/strava-setup.md).
-
-## Impor file jam (GPX, TCX, FIT)
-
-Tanpa Strava, lari atau jalan bisa diimpor dari file ekspor jam/aplikasi (Garmin, Coros, Huawei, dll.)
-di tab Catat › *Impor file jam*, beberapa file sekaligus. Parser ada di `src/lib/activityFile.ts`, tanpa
-library: GPX dan TCX dibaca sebagai XML, FIT dibaca langsung dari format binernya (pesan `session` dan
-`record`). Jarak, durasi, HR, cadence, dan split per km terisi otomatis; aktivitas tanpa GPS dicatat
-sebagai treadmill, dan yang sudah tercatat dilewati.
-
-## Data & sinkron dengan coach
-
-Semua data tinggal di perangkat (IndexedDB) dan aplikasi meminta penyimpanan persisten. Untuk berbagi:
-- **Salin ringkasan 7 hari**: teks siap tempel ke chat coach (lari, gym, tensi, rata-rata tensi).
-- **Ekspor JSON**: cadangan lengkap; **Impor JSON** menggabungkan data (entri yang lebih baru menang), jadi aman dipakai untuk pindah HP.
+Untuk memasang di HP: buka URL deploy, lalu pilih **Android/Chrome:** menu ⋮ › *Tambahkan ke layar utama*,
+atau **iPhone/Safari:** Bagikan › *Tambah ke Layar Utama*.
 
 Format ekspor (`schemaVersion: 1`):
 ```json
 { "app": "pwa-latihan", "schemaVersion": 1, "exportedAt": "...",
-  "profile": {}, "runs": [], "daily": [], "gym": [], "marks": [] }
+  "profile": {}, "runs": [], "daily": [], "gym": [], "marks": [], "shoes": [] }
 ```
 
 ## Rencana berikutnya
 
-- Sinkron otomatis antar perangkat / dengan coach lewat backend kecil (mis. Supabase atau Cloudflare D1 + Workers), memakai format ekspor di atas sebagai kontrak data.
-- Pengingat ukur tensi lewat Web Push.
-- Rencana blok berikutnya setelah UI Ultra (menuju 5K sub 35 → sub 30).
+- Masukan dari pemakaian bersama teman lari (sedang berjalan).
+- Fase publik: akun dan sinkron antar perangkat (mis. Supabase atau Cloudflare D1), notifikasi push, review aplikasi Strava.
+- Penyesuaian jadwal otomatis bila sesi terlewat atau HR terus tinggi.
+
+> Rusukaina adalah alat bantu catatan latihan, bukan alat medis. Konsultasikan kondisi kesehatan dengan dokter.
 
 ## Lisensi
 
