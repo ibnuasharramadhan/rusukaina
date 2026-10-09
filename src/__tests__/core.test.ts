@@ -174,6 +174,11 @@ describe('tanpa tensimeter', () => {
     expect(r.noStrides).toBe(true)
     expect(r.noLoadIncrease).toBe(true)
   })
+  it('tanpa hipertensi (teman tanpa obat tensi): tidak ada batasan strides/beban', () => {
+    const r = readiness({ restingHr: 58, sleepHours: 7, baseline: 58, trackBp: false, hypertension: false })
+    expect(r).toMatchObject({ level: 'green', canTrain: true, noStrides: false, noLoadIncrease: false })
+    expect(r.verdicts.some((v) => v.title === 'Tensi belum dipantau')).toBe(false)
+  })
   it('tensi lama diabaikan, HR tinggi tetap memblok', () => {
     expect(readiness({ sys: 170, dia: 100, restingHr: 58, baseline: 58, trackBp: false }).canTrain).toBe(true)
     expect(readiness({ restingHr: 66, baseline: 58, trackBp: false }).canTrain).toBe(false)

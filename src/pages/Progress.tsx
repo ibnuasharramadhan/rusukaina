@@ -72,7 +72,7 @@ export function Progress() {
       <Card title="Efisiensi aerobik">
         <p className="muted small">Meter per detak jantung (jarak ÷ total detak). Naik = stamina membaik: lebih jauh dengan detak yang sama.</p>
         <LineChart
-          yFormat={(v) => v.toFixed(2).replace('.', ',')}
+          yFormat={(v) => v.toFixed(3).replace('.', ',')}
           series={[{ name: 'm/detak', color: C.s1, points: withHr.map((r) => ({ x: r.date, y: metersPerBeat(r.distanceKm, r.durationSec, r.avgHr!)! })) }]}
         />
       </Card>

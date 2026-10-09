@@ -229,7 +229,7 @@ function GymSection({ params }: { params: URLSearchParams }) {
   const [notes, setNotes] = useState(editing?.notes ?? '')
   const saved = params.get('saved') === '1'
   const d = daily.find((x) => x.date === date)
-  const ready = readiness({ sys: d?.sys, dia: d?.dia, restingHr: d?.restingHr, sleepHours: d?.sleepHours, baseline: profile.restingHrBaseline, trackBp: profile.trackBp, pain: painVerdict(daily, date) })
+  const ready = readiness({ sys: d?.sys, dia: d?.dia, restingHr: d?.restingHr, sleepHours: d?.sleepHours, baseline: profile.restingHrBaseline, trackBp: profile.trackBp, hypertension: !!profile.medName, pain: painVerdict(daily, date) })
 
   const initialSets = useMemo(() => GYM[workout].map((ex): GymSet => {
     const prev = editing?.workout === workout ? editing.exercises.find((e) => e.exercise === ex.name) : undefined
@@ -267,7 +267,7 @@ function GymSection({ params }: { params: URLSearchParams }) {
         {ready.level !== 'unknown' && ready.level !== 'green' && (
           <p className="swap"><LevelBadge level={ready.level} /> {ready.headline}{ready.noLoadIncrease ? '. Jangan naikkan beban hari ini.' : ''}</p>
         )}
-        {!profile.trackBp && <p className="hint">{NO_BP_NOTE}</p>}
+        {!profile.trackBp && !!profile.medName && <p className="hint">{NO_BP_NOTE}</p>}
         <RestTimer />
         <ol className="exercises">
           {GYM[workout].map((ex, i) => {
@@ -371,7 +371,7 @@ function DailySection({ params }: { params: URLSearchParams }) {
         {!daily.length && <p className="muted">Belum ada catatan.</p>}
         <ul className="history">
           {[...daily].reverse().map((d) => {
-            const r = readiness({ sys: d.sys, dia: d.dia, restingHr: d.restingHr, sleepHours: d.sleepHours, baseline: profile.restingHrBaseline, trackBp: profile.trackBp, pain: painVerdict(daily, d.date) })
+            const r = readiness({ sys: d.sys, dia: d.dia, restingHr: d.restingHr, sleepHours: d.sleepHours, baseline: profile.restingHrBaseline, trackBp: profile.trackBp, hypertension: !!profile.medName, pain: painVerdict(daily, d.date) })
             return (
               <li key={d.date}>
                 <div className="grow">

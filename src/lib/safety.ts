@@ -71,10 +71,18 @@ export interface Readiness {
   noLoadIncrease: boolean
 }
 
-/** Tanpa tensimeter: tensi terakhir yang diketahui 148/83 (kuning), jadi batasan kuning tetap berlaku. */
-export const NO_BP_NOTE = 'Tensi belum dipantau (terakhir 148/83): tanpa strides dan beban gym tidak dinaikkan sampai tensi bisa dicek.'
+/**
+ * Tanpa tensimeter tapi minum obat tensi: anggap tensi masih kuning (untuk Ibnu,
+ * terakhir 148/83), jadi batasan kuning tetap berlaku. Tanpa riwayat hipertensi
+ * (tidak ada obat tensi), batasan ini tidak dipakai.
+ */
+export const NO_BP_NOTE = 'Tensi belum dipantau: tanpa strides dan beban gym tidak dinaikkan sampai tensi bisa dicek.'
 
-export function readiness(input: { sys?: number; dia?: number; restingHr?: number; sleepHours?: number; baseline: number; trackBp?: boolean; pain?: Verdict }): Readiness {
+export function readiness(input: {
+  sys?: number; dia?: number; restingHr?: number; sleepHours?: number; baseline: number; trackBp?: boolean; pain?: Verdict
+  /** Punya hipertensi (minum obat tensi). Default true supaya aman. */
+  hypertension?: boolean
+}): Readiness {
   const r = input.trackBp === false ? readinessWithoutBp(input) : readinessWithBp(input)
   return withPain(r, input.pain)
 }
@@ -115,7 +123,8 @@ function readinessWithBp(input: { sys?: number; dia?: number; restingHr?: number
   }
 }
 
-function readinessWithoutBp(input: { restingHr?: number; sleepHours?: number; baseline: number }): Readiness {
+function readinessWithoutBp(input: { restingHr?: number; sleepHours?: number; baseline: number; hypertension?: boolean }): Readiness {
+  const htn = input.hypertension ?? true
   const hr = restingHrVerdict(input.restingHr, input.baseline)
   const sl = sleepVerdict(input.sleepHours)
   const level = worst(hr.level, sl.level)
@@ -128,10 +137,10 @@ function readinessWithoutBp(input: { restingHr?: number; sleepHours?: number; ba
   return {
     level,
     headline,
-    verdicts: [hr, sl, note].filter((v) => v.advice.length),
+    verdicts: [hr, sl, ...(htn ? [note] : [])].filter((v) => v.advice.length),
     canTrain: level === 'green' || level === 'yellow',
-    noStrides: true,
-    noLoadIncrease: true,
+    noStrides: htn,
+    noLoadIncrease: htn,
   }
 }
 
