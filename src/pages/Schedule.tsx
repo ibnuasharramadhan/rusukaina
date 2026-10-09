@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Icon } from '../components/icons'
 import { KindIcon, PageHeader } from '../components/ui'
+import { celebrate } from '../lib/motion'
 import { PRIORITY_NOTE, RUN_RULES, SCHEDULE, WEEKS } from '../data/plan'
 import { formatDate, today } from '../lib/date'
 import { setMark } from '../lib/db'
@@ -21,6 +22,7 @@ export function Schedule() {
   const stats = weekStats(runs, gym, marks)
 
   async function mark(date: string, status: SessionStatus | null) {
+    if (status === 'done') celebrate()
     await setMark(status ? { date, status, updatedAt: 0 } : { date, status: null })
     setMenu(null)
     await refresh()

@@ -5,17 +5,24 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { diffDays, formatDate, type ISODate } from '../lib/date'
 
+/** Lebar kontainer, dan apakah grafik sudah pernah terlihat di layar (animasi baru main saat itu). */
 function useWidth<T extends HTMLElement>() {
   const ref = useRef<T>(null)
   const [w, setW] = useState(320)
+  const [seen, setSeen] = useState(false)
   useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
     const ro = new ResizeObserver(([e]) => setW(Math.max(240, Math.floor(e.contentRect.width))))
     ro.observe(el)
-    return () => ro.disconnect()
+    const io = typeof IntersectionObserver === 'function'
+      ? new IntersectionObserver(([e]) => { if (e.isIntersecting) { setSeen(true); io?.disconnect() } }, { threshold: 0.35 })
+      : null
+    if (io) io.observe(el)
+    else setSeen(true)
+    return () => { ro.disconnect(); io?.disconnect() }
   }, [])
-  return [ref, w] as const
+  return [ref, w, seen] as const
 }
 
 function niceTicks(min: number, max: number, count = 4): number[] {
@@ -54,7 +61,7 @@ export function LineChart(props: {
   empty?: ReactNode
 }) {
   const { series, refs = [], height = 200, yFormat = (v) => String(Math.round(v)), invert } = props
-  const [ref, width] = useWidth<HTMLDivElement>()
+  const [ref, width, seen] = useWidth<HTMLDivElement>()
   const [hover, setHover] = useState<ISODate | null>(null)
   const [table, setTable] = useState(false)
 
@@ -99,7 +106,7 @@ export function LineChart(props: {
   const tipLeft = hover ? Math.min(Math.max(sx(hover) - 70, 0), width - 140) : 0
 
   return (
-    <div className="chart" ref={ref}>
+    <div className={`chart ${seen ? 'is-in' : ''}`} ref={ref}>
       {series.length > 1 && (
         <div className="legend">
           {series.map((s) => (
@@ -134,9 +141,10 @@ export function LineChart(props: {
               const last = pts[pts.length - 1]
               return (
                 <g key={s.name}>
-                  <path d={d} fill="none" stroke={s.color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
-                  {pts.map((p) => (
-                    <circle key={p.x} cx={sx(p.x)} cy={sy(p.y)} r={p.x === hover || p === last ? 5 : 3.5} fill={s.color} className="dot" />
+                  <path d={d} fill="none" stroke={s.color} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" pathLength={1} className="line" />
+                  {pts.map((p, i) => (
+                    <circle key={p.x} cx={sx(p.x)} cy={sy(p.y)} r={p.x === hover || p === last ? 5 : 3.5} fill={s.color} className={`dot ${p === last ? 'last' : ''}`}
+                      style={{ animationDelay: `${200 + (i / Math.max(1, pts.length - 1)) * 700}ms` }} />
                   ))}
                 </g>
               )
@@ -189,7 +197,7 @@ export function BarChart(props: {
   unit?: string
 }) {
   const { bars, height = 180, unit = '' } = props
-  const [ref, width] = useWidth<HTMLDivElement>()
+  const [ref, width, seen] = useWidth<HTMLDivElement>()
   const [hover, setHover] = useState<number | null>(null)
   const max = Math.max(1, ...bars.map((b) => Math.max(b.value, b.target ?? 0)))
   const ticks = niceTicks(0, max, 3)
@@ -202,7 +210,7 @@ export function BarChart(props: {
   const sy = (v: number) => pad.t + ih - (v / top) * ih
 
   return (
-    <div className="chart" ref={ref}>
+    <div className={`chart ${seen ? 'is-in' : ''}`} ref={ref}>
       <div className="chart-plot">
         <svg width={width} height={height} role="img" aria-label="Volume per minggu">
           {ticks.map((t) => (
@@ -227,7 +235,7 @@ export function BarChart(props: {
                 {b.target != null && b.target > 0 && (
                   <line x1={x - 3} x2={x + bw + 3} y1={sy(b.target)} y2={sy(b.target)} className="target" />
                 )}
-                {d && <path d={d} className={b.highlight ? 'bar now' : 'bar'} />}
+                {d && <path d={d} className={b.highlight ? 'bar now' : 'bar'} style={{ animationDelay: `${i * 50}ms` }} />}
                 {b.value > 0 && (hover === i || b.highlight) && (
                   <text x={cx} y={y - 4} className="axis value" textAnchor="middle">{b.value}</text>
                 )}

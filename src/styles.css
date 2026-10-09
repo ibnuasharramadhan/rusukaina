@@ -372,3 +372,110 @@ details summary { cursor: pointer; font-weight: 600; }
 .toast .btn.ghost { color: var(--bg); }
 
 .stop summary { display: flex; align-items: center; gap: 8px; color: var(--critical); }
+
+/* ===== Gerak (lebih hidup) =====
+   Referensi: cincin aktivitas Apple Fitness, strip minggu Strava, perayaan kecil
+   ala Nike Run Club, dan View Transitions API untuk pindah halaman. */
+:root { --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1); --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* Pindah halaman: geser + pudar sesuai arah tab. Tab bar tetap diam. */
+.route { view-transition-name: page; }
+.tabbar { view-transition-name: tabbar; }
+::view-transition-old(page) { animation: vt-out 0.18s ease-in both; }
+::view-transition-new(page) { animation: vt-in 0.28s var(--ease-out) both; }
+@keyframes vt-out { to { opacity: 0; transform: translateX(var(--vt-x, -24px)); } }
+@keyframes vt-in { from { opacity: 0; transform: translateX(var(--vt-in, 24px)); } }
+:root[data-nav='back'] { --vt-x: 24px; --vt-in: -24px; }
+
+/* Kartu muncul saat di-scroll (browser yang mendukung scroll-driven animation). */
+@supports (animation-timeline: view()) {
+  .route .page > *:nth-child(n + 5) { animation: rise linear both; animation-timeline: view(); animation-range: entry 0% entry 60%; animation-delay: 0s; }
+}
+
+/* Tekan = sedikit mengecil, terasa seperti tombol fisik. */
+.week-h, .history li, .timeline li { transition: transform 0.15s var(--ease-out); }
+.week-h:active { transform: scale(0.985); }
+
+/* Tab bar: ikon memantul saat aktif. */
+@keyframes tab-pop { 0% { transform: scale(0.7); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
+.tabbar a.on .ti svg { animation: tab-pop 0.4s var(--ease-spring) both; }
+.tabbar a.on .ti { animation: fade 0.25s ease both; }
+
+/* Hitung mundur: angka berdenyut halus. */
+.countdown .num { display: inline-block; background: linear-gradient(120deg, var(--accent), color-mix(in srgb, var(--accent) 60%, var(--warning)), var(--accent)); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: sheen 6s ease-in-out infinite; }
+@keyframes sheen { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+
+/* Cincin kesiapan: tiap bagian menggambar diri. */
+@keyframes seg-draw { from { stroke-dasharray: 0 var(--c); } }
+.ring-seg { animation: seg-draw 0.7s var(--ease-out) both; }
+
+/* Minggu ini: cincin konsentris + strip 7 hari */
+.week-rings { --r-sesi: var(--accent); --r-lari: var(--series-1); --r-gym: var(--gym); }
+.wr-top { display: flex; gap: 18px; align-items: center; }
+.rings { width: 118px; height: 118px; flex: none; transform: rotate(-90deg); overflow: visible; }
+.rings circle { fill: none; stroke-width: 11; stroke-linecap: round; }
+.rings .track { stroke: var(--surface-2); }
+.r-sesi { --rc: var(--r-sesi); } .r-lari { --rc: var(--r-lari); } .r-gym { --rc: var(--r-gym); }
+.rings .fill { stroke: var(--rc); animation: ring-draw 1.1s var(--ease-out) both; }
+.rings .glow { stroke: var(--rc); opacity: 0; animation: ring-glow 1.2s ease-out both; }
+@keyframes ring-draw { from { stroke-dasharray: 0 1; } }
+@keyframes ring-glow { 0% { opacity: 0.55; stroke-width: 11; } 100% { opacity: 0; stroke-width: 22; } }
+.wr-legend { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.wr-row { display: flex; align-items: center; gap: 8px; }
+.wr-row i { width: 10px; height: 10px; border-radius: 50%; background: var(--rc); flex: none; }
+.wr-l { flex: 1; font-size: 0.88rem; font-weight: 600; color: var(--ink-2); }
+.wr-v { font-size: 1.5rem; line-height: 1; }
+.wr-v small { font-size: 0.95rem; color: var(--muted); font-weight: 500; }
+.strip { list-style: none; padding: 0; margin: 14px 0 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.strip li { display: flex; flex-direction: column; align-items: center; gap: 6px; animation: rise 0.4s var(--ease-out) both; }
+.strip .dn { font-size: 0.7rem; font-weight: 600; color: var(--muted); }
+.strip .dot { width: 26px; height: 26px; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--tone) 45%, transparent); background: transparent; position: relative; }
+.strip .t-rest .dot { border-style: dotted; border-color: var(--axis); }
+.strip .done .dot { background: var(--tone); border-color: var(--tone); animation: pop 0.35s var(--ease-spring) both; animation-delay: inherit; }
+.strip .done .dot::after { content: ''; position: absolute; left: 8px; top: 4px; width: 6px; height: 11px; border: solid #fff; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
+.strip .missed .dot { border-style: dashed; border-color: var(--axis); }
+.strip .skipped .dot, .strip .swapped .dot { border-color: var(--axis); background: var(--surface-2); }
+.strip .today .dn { color: var(--accent-text); }
+.strip .today .dot::before { content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid var(--accent); opacity: 0; animation: pulse 2.2s ease-out infinite; }
+@keyframes pulse { 0% { opacity: 0.7; transform: scale(0.75); } 100% { opacity: 0; transform: scale(1.25); } }
+
+/* Sesi selesai: label "Selesai" memantul masuk. */
+.pill.done { animation: pop 0.4s var(--ease-spring) both; }
+.session.is-done::before { animation: bar-grow 0.6s var(--ease-out) both; transform-origin: left; }
+@keyframes bar-grow { from { transform: scaleX(0); } }
+
+/* Set gym: kotak memantul saat ditandai. */
+.sets button.on { animation: pop 0.3s var(--ease-spring) both; }
+
+/* Grafik: garis menggambar diri, titik muncul berurutan, batang tumbuh dari bawah. */
+.chart .line { stroke-dasharray: 1; }
+.chart:not(.is-in) .line { stroke-dashoffset: 1; }
+.chart:not(.is-in) .dot, .chart:not(.is-in) .bar { opacity: 0; }
+.chart.is-in .line { animation: line-draw 1s var(--ease-out) both; }
+@keyframes line-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.chart .dot { transform-box: fill-box; transform-origin: center; transition: r 0.15s ease; }
+.chart.is-in .dot { animation: pop 0.3s var(--ease-spring) both; }
+.chart .bar { transform-box: fill-box; transform-origin: bottom; }
+.chart.is-in .bar { animation: bar-up 0.6s var(--ease-out) both; }
+@keyframes bar-up { from { transform: scaleY(0); } }
+.tooltip { animation: pop 0.14s ease both; }
+
+/* Progres minggu di Jadwal: hari muncul berurutan saat dibuka. */
+.days li { animation: rise 0.3s var(--ease-out) both; }
+.days li:nth-child(2) { animation-delay: 30ms; } .days li:nth-child(3) { animation-delay: 60ms; } .days li:nth-child(4) { animation-delay: 90ms; }
+.days li:nth-child(5) { animation-delay: 120ms; } .days li:nth-child(6) { animation-delay: 150ms; } .days li:nth-child(7) { animation-delay: 180ms; }
+.week-bar span, .plan-fill { animation: bar-grow 0.9s var(--ease-out) both; transform-origin: left; }
+
+/* Memuat: blok berkilau */
+.skel { border-radius: var(--radius); background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface) 50%, var(--surface-2) 100%); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+/* Konfeti */
+.confetti { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 50; }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(page), ::view-transition-new(page) { animation: none !important; }
+  .countdown .num { color: var(--accent); background: none; }
+  .chart .line { stroke-dashoffset: 0 !important; }
+  .chart .dot, .chart .bar { opacity: 1 !important; }
+}

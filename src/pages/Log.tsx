@@ -10,6 +10,7 @@ import { formatDuration, formatPace, paceSecPerKm, parseDuration } from '../lib/
 import { href } from '../lib/router'
 import { NO_BP_NOTE, readiness, runFlags } from '../lib/safety'
 import { runRuleWarnings } from '../lib/stats'
+import { celebrate } from '../lib/motion'
 import { useData } from '../lib/store'
 import type { GymLog, GymSet, RunLog, RunType } from '../lib/types'
 import { karvonenZones, zoneFor } from '../lib/zones'
@@ -77,6 +78,7 @@ function RunSection({ params }: { params: URLSearchParams }) {
       createdAt: editing?.createdAt ?? now, updatedAt: now,
     }
     await saveRun(run)
+    if (!editing) celebrate()
     await refresh()
     setErr('')
     setSaved(run)
@@ -186,6 +188,7 @@ function GymSection({ params }: { params: URLSearchParams }) {
   async function submit() {
     const now = Date.now()
     const id = editing?.id ?? uid()
+    if (!editing) celebrate()
     await saveGym({
       id, date, workout, exercises: sets, rpe: num(rpe), notes: notes.trim() || undefined,
       createdAt: editing?.createdAt ?? now, updatedAt: now,

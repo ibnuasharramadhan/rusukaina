@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { DailyForm } from '../components/DailyForm'
 import { Icon } from '../components/icons'
-import { Card, KIND, KindIcon, LEVEL_LABEL } from '../components/ui'
+import { Card, CountUp, KIND, KindIcon, LEVEL_LABEL } from '../components/ui'
+import { WeekRings } from '../components/WeekRings'
+import { celebrate, originOf } from '../lib/motion'
 import { PLAN_END, PLAN_START, SCHEDULE, sessionOn, weekOf } from '../data/plan'
 import { downloadBackup } from '../lib/backup'
 import { addDays, diffDays, formatDate, toISO, today } from '../lib/date'
@@ -36,7 +38,8 @@ export function Today() {
   const planDays = diffDays(PLAN_START, PLAN_END)
   const planPct = Math.min(1, Math.max(0, diffDays(PLAN_START, t) / planDays))
 
-  async function mark(st: 'done' | 'skipped' | null) {
+  async function mark(st: 'done' | 'skipped' | null, origin?: { x: number; y: number }) {
+    if (st === 'done') celebrate(origin)
     await setMark(st ? { date: t, status: st, updatedAt: 0 } : { date: t, status: null })
     await refresh()
   }
@@ -51,7 +54,7 @@ export function Today() {
           </div>
           {daysToRace >= 0 && (
             <div className="countdown" aria-label={`${daysToRace} hari menuju ${profile.raceName}`}>
-              <span className="num">{daysToRace}</span>
+              <span className="num"><CountUp value={daysToRace} /></span>
               <span className="countdown-l">hari lagi</span>
             </div>
           )}
@@ -81,6 +84,8 @@ export function Today() {
         </Card>
       )}
 
+      <WeekRings t={t} runs={runs} gym={gym} marks={marks} />
+
       {showRace && <RaceResultCard name={profile.raceName} date={profile.raceDate} result={result} />}
 
       {week?.note && (
@@ -94,10 +99,10 @@ export function Today() {
         <Card title="Lari terakhir" action={<a className="link" href={href('progres')}>Progres <Icon name="chevron" size={14} /></a>}>
           <p className="small muted run-meta">{formatDate(lastRun.date, true)} · {lastRun.type}</p>
           <div className="big-stats">
-            <BigStat value={km(lastRun.distanceKm)} unit="km" />
+            <BigStat value={<CountUp value={lastRun.distanceKm} decimals={2} />} unit="km" />
             <BigStat value={formatPace(paceSecPerKm(lastRun.distanceKm, lastRun.durationSec))} unit="/km" />
             <BigStat value={formatDuration(lastRun.durationSec)} unit="waktu" />
-            {lastRun.avgHr && <BigStat value={lastRun.avgHr} unit={lastRun.maxHr ? `bpm · maks ${lastRun.maxHr}` : 'bpm'} tone={lastRun.avgHr > profile.easyCap ? 'warn' : undefined} />}
+            {lastRun.avgHr && <BigStat value={<CountUp value={lastRun.avgHr} />} unit={lastRun.maxHr ? `bpm · maks ${lastRun.maxHr}` : 'bpm'} tone={lastRun.avgHr > profile.easyCap ? 'warn' : undefined} />}
           </div>
           {runFlags(lastRun, profile.easyCap).map((f) => <p key={f} className="flag"><Icon name="alert" size={16} /> {f}</p>)}
         </Card>
@@ -161,7 +166,7 @@ function ReadinessRing({ levels, overall }: { levels: Level[]; overall: Level })
         {levels.map((lv, i) => (
           <circle key={i} className={`ring-seg lv-${lv}`} cx="50" cy="50" r={R} fill="none" strokeWidth="9" strokeLinecap="round"
             strokeDasharray={`${seg - gap} ${C - seg + gap}`} strokeDashoffset={-i * seg - gap / 2}
-            style={{ animationDelay: `${i * 120}ms` }} />
+            style={{ animationDelay: `${i * 120}ms`, '--c': C } as React.CSSProperties} />
         ))}
       </svg>
       <span className="ring-label">{LEVEL_LABEL[overall]}</span>
@@ -205,7 +210,7 @@ function ReadinessCard({ d, r, baseline, trackBp, onEdit }: { d: DailyLog; r: Re
 }
 
 function TodaySession({ session, easyCap, canTrain, noStrides, status, onMark, ruleWarnings }: {
-  session: PlannedSession; easyCap: number; canTrain: boolean; noStrides: boolean; status: string | null; onMark: (s: 'done' | 'skipped' | null) => void; ruleWarnings: string[]
+  session: PlannedSession; easyCap: number; canTrain: boolean; noStrides: boolean; status: string | null; onMark: (s: 'done' | 'skipped' | null, origin?: { x: number; y: number }) => void; ruleWarnings: string[]
 }) {
   const isGym = session.kind === 'gymA' || session.kind === 'gymB'
   const isRun = session.kind === 'easy' || session.kind === 'long' || session.kind === 'race'
@@ -236,7 +241,7 @@ function TodaySession({ session, easyCap, canTrain, noStrides, status, onMark, r
           <div className="row wrap actions">
             {isRun && <a className="btn primary" href={href('catat', { tab: 'lari', date: session.date })}>Catat lari</a>}
             {isGym && <a className="btn primary" href={href('catat', { tab: 'gym', date: session.date, w: session.kind === 'gymA' ? 'A' : 'B' })}>Mulai Gym {session.kind === 'gymA' ? 'A' : 'B'}</a>}
-            <button className="btn" onClick={() => onMark('done')}>Tandai selesai</button>
+            <button className="btn" onClick={(e) => onMark('done', originOf(e))}>Tandai selesai</button>
             <button className="btn ghost" onClick={() => onMark('skipped')}>Lewati</button>
           </div>
         )

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useCountUp } from '../lib/motion'
 import { Icon, type IconName } from './icons'
 import type { Level } from '../lib/safety'
 import type { SessionKind } from '../lib/types'
@@ -97,4 +98,11 @@ export function num(v: string): number | undefined {
   if (v.trim() === '') return undefined
   const n = Number(v.replace(',', '.'))
   return isFinite(n) ? n : undefined
+}
+
+/** Angka yang "berjalan" dari 0 ke nilainya saat muncul. */
+export function CountUp({ value, decimals = 0, comma = true }: { value: number; decimals?: number; comma?: boolean }) {
+  const v = useCountUp(value)
+  const s = v.toFixed(decimals)
+  return <>{comma ? s.replace('.', ',') : s}</>
 }

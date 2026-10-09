@@ -16,13 +16,23 @@ const NAV: { route: Route; label: string; icon: IconName }[] = [
   { route: 'info', label: 'Info', icon: 'info' },
 ]
 
+function Skeleton() {
+  return (
+    <div className="page" aria-busy="true" aria-label="Memuat">
+      <div className="skel" style={{ height: 64 }} />
+      <div className="skel" style={{ height: 150 }} />
+      <div className="skel" style={{ height: 190 }} />
+    </div>
+  )
+}
+
 export function App() {
   const { ready } = useData()
   const { route, params } = useHashRoute()
   return (
     <div className="app">
       <main key={route} className="route">
-        {!ready ? <div className="page muted">Memuat…</div>
+        {!ready ? <Skeleton />
           : route === 'jadwal' ? <Schedule />
           : route === 'catat' ? <Log params={params} />
           : route === 'progres' ? <Progress />
