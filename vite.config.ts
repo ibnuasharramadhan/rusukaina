@@ -14,8 +14,8 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Latihan: Menuju UI Ultra 7K',
-        short_name: 'Latihan',
+        name: 'Rusukaina: Menuju UI Ultra 7K',
+        short_name: 'Rusukaina',
         description: 'Jadwal lari & gym, log latihan, tensi dan HR, offline.',
         lang: 'id',
         start_url: './',

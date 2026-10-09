@@ -20,7 +20,7 @@ di Strava beserta denyut jantungnya.
 
 ## 2. Buat aplikasi API Strava
 Buka <https://www.strava.com/settings/api>:
-- **Application Name:** Latihan 7K (bebas)
+- **Application Name:** Rusukaina (bebas)
 - **Website:** `https://ibnuasharramadhan.github.io/rusukaina/`
 - **Authorization Callback Domain:** `ibnuasharramadhan.github.io`
 
