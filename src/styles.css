@@ -507,3 +507,29 @@ details summary { cursor: pointer; font-weight: 600; }
 @keyframes fade-in { from { opacity: 0; } }
 @media (min-width: 640px) { .sheet-backdrop { align-items: center; } .sheet { border-radius: var(--radius); } }
 @media (prefers-reduced-motion: reduce) { .sheet, .sheet-backdrop { animation: none; } }
+
+/* Nyeri */
+.pain { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; }
+.pain .field-l { padding: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 0.88rem; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s; }
+.chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+.pain input[type='range'] { width: 100%; accent-color: var(--accent); }
+.pain-scale { display: flex; align-items: center; gap: 12px; }
+.pain-v { font-size: 1.1rem; min-width: 3.2ch; text-align: right; }
+
+/* Sepatu */
+.shoes { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.shoes li { display: grid; gap: 6px; }
+.shoes li.retired { opacity: 0.55; }
+.shoe-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.shoe-top .num { font-size: 1.15rem; white-space: nowrap; }
+.shoe-top small { color: var(--muted); font-size: 0.8rem; }
+.shoe-bar { height: 8px; border-radius: 4px; background: var(--surface-2); overflow: hidden; }
+.shoe-bar i { display: block; height: 100%; background: var(--good); border-radius: 4px; transition: width 0.6s ease; }
+.shoes li.soon .shoe-bar i { background: var(--warning); }
+.shoes li.replace .shoe-bar i { background: var(--critical); }
+.shoe-foot { display: flex; align-items: center; gap: 12px; }
+.shoe-foot .warn { color: var(--critical); font-weight: 600; }
+.shoes li.soon .warn { color: var(--accent-text); }
+.link.danger { color: var(--critical); }

@@ -127,6 +127,7 @@ export function coachSummary(input: { runs: RunLog[]; walks?: RunLog[]; daily: D
       d.sleepHours != null ? `tidur ${d.sleepHours} j` : null,
       d.medTaken === false ? 'obat terlewat' : null,
       d.symptoms ? `keluhan: ${d.symptoms}` : null,
+      d.painAreas?.length ? `nyeri ${d.painAreas.join(', ').toLowerCase()}${d.painScore ? ` ${d.painScore}/10` : ''}` : null,
     ].filter(Boolean)
     lines.push(`- ${formatDate(d.date, true)}: ${parts.join(', ')}`)
   }

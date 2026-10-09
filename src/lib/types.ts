@@ -43,6 +43,20 @@ export interface RunLog {
   rpe?: number
   splits?: string
   notes?: string
+  /** Sepatu yang dipakai (lihat Shoe). */
+  shoeId?: string
+  createdAt: number
+  updatedAt: number
+}
+
+export interface Shoe {
+  id: string
+  name: string
+  /** Jarak yang sudah ditempuh sebelum dicatat di aplikasi. */
+  startKm: number
+  /** Batas ganti (km), umumnya 500–800. */
+  limitKm: number
+  retired?: boolean
   createdAt: number
   updatedAt: number
 }
@@ -59,6 +73,10 @@ export interface DailyLog {
   sleepHours?: number
   medTaken?: boolean
   symptoms?: string
+  /** Bagian tubuh yang nyeri hari ini (lihat PAIN_AREAS). */
+  painAreas?: string[]
+  /** Skala nyeri 1–10 (yang paling sakit). */
+  painScore?: number
   notes?: string
   updatedAt: number
 }
@@ -133,4 +151,6 @@ export interface ExportFile {
   daily: DailyLog[]
   gym: GymLog[]
   marks: SessionMark[]
+  /** Opsional supaya file ekspor lama tetap bisa diimpor. */
+  shoes?: Shoe[]
 }

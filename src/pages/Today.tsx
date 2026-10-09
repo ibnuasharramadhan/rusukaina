@@ -12,17 +12,18 @@ import { formatDuration, formatPace, paceSecPerKm } from '../lib/pace'
 import { href } from '../lib/router'
 import { bpLevel, readiness, restingHrVerdict, runFlags, sleepVerdict, STOP_SIGNS, type Level, type Readiness } from '../lib/safety'
 import { backupDue, raceResult, runRuleWarnings, statusOf } from '../lib/stats'
+import { painVerdict, shoeKm, shoeState } from '../lib/body'
 import { useData } from '../lib/store'
 import type { DailyLog, PlannedSession, RunLog } from '../lib/types'
 
 const km = (n: number) => String(n).replace('.', ',')
 
 export function Today() {
-  const { profile, daily, runs, walks, gym, marks, lastExportAt, refresh } = useData()
+  const { profile, daily, runs, walks, gym, marks, shoes, lastExportAt, refresh } = useData()
   const t = today()
   const d = daily.find((x) => x.date === t)
   const [editing, setEditing] = useState(false)
-  const r = readiness({ sys: d?.sys, dia: d?.dia, restingHr: d?.restingHr, sleepHours: d?.sleepHours, baseline: profile.restingHrBaseline, trackBp: profile.trackBp })
+  const r = readiness({ sys: d?.sys, dia: d?.dia, restingHr: d?.restingHr, sleepHours: d?.sleepHours, baseline: profile.restingHrBaseline, trackBp: profile.trackBp, pain: painVerdict(daily, t) })
   const session = sessionOn(t)
   const week = weekOf(t)
   const daysToRace = diffDays(t, profile.raceDate)
@@ -38,6 +39,7 @@ export function Today() {
   const hasData = runs.length + daily.length + gym.length > 0
   const planDays = diffDays(planStart, planEnd)
   const planPct = Math.min(1, Math.max(0, diffDays(planStart, t) / planDays))
+  const wornShoes = shoes.filter((x) => !x.retired).map((x) => ({ ...x, km: shoeKm(x, [...runs, ...walks]) })).filter((x) => shoeState(x.km, x.limitKm) !== 'ok')
 
   async function mark(st: 'done' | 'skipped' | null, origin?: { x: number; y: number }) {
     if (st === 'done') celebrate(origin)
@@ -124,6 +126,17 @@ export function Today() {
           </ol>
         </Card>
       )}
+
+      {wornShoes.map((x) => (
+        <aside key={x.id} className="note">
+          <Icon name="alert" size={18} />
+          <p className="grow">
+            <b>Sepatu {x.name} sudah {String(x.km).replace('.', ',')} km</b> dari batas {x.limitKm} km.{' '}
+            {x.km >= x.limitKm ? 'Bantalannya sudah banyak berkurang; saatnya ganti.' : 'Mulai siapkan pengganti.'}{' '}
+            <a className="link" href={href('info')}>Kelola sepatu</a>
+          </p>
+        </aside>
+      ))}
 
       {hasData && backupDue(lastExportAt, Date.now()) && (
         <aside className="note backup">

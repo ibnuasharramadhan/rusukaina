@@ -1,6 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
 import { LEGACY_PROFILE } from '../data/plan'
-import type { DailyLog, ExportFile, GymLog, Profile, RunLog, SessionMark } from './types'
+import type { DailyLog, ExportFile, GymLog, Profile, RunLog, SessionMark, Shoe } from './types'
 
 interface LatihanDB extends DBSchema {
   runs: { key: string; value: RunLog; indexes: { date: string } }
@@ -111,6 +111,18 @@ export async function markExported(at = Date.now()) {
   await (await db()).put('meta', at, 'lastExportAt')
 }
 
+// --- Sepatu (disimpan sebagai satu daftar di meta, tanpa object store baru)
+export async function listShoes(): Promise<Shoe[]> {
+  return ((await (await db()).get('meta', 'shoes')) as Shoe[] | undefined) ?? []
+}
+export async function saveShoe(s: Shoe) {
+  const all = await listShoes()
+  await (await db()).put('meta', [...all.filter((x) => x.id !== s.id), s], 'shoes')
+}
+export async function deleteShoe(id: string) {
+  await (await db()).put('meta', (await listShoes()).filter((x) => x.id !== id), 'shoes')
+}
+
 // --- Ekspor / impor
 export async function exportAll(): Promise<ExportFile> {
   return {
@@ -122,10 +134,11 @@ export async function exportAll(): Promise<ExportFile> {
     daily: await listDaily(),
     gym: await listGym(),
     marks: await listMarks(),
+    shoes: await listShoes(),
   }
 }
 
-export interface ImportResult { runs: number; daily: number; gym: number; marks: number }
+export interface ImportResult { runs: number; daily: number; gym: number; marks: number; shoes: number }
 
 export function validateExport(x: unknown): ExportFile {
   const f = x as Partial<ExportFile>
@@ -144,7 +157,7 @@ export function validateExport(x: unknown): ExportFile {
 export async function importAll(raw: unknown, opts: { includeProfile?: boolean } = {}): Promise<ImportResult> {
   const f = validateExport(raw)
   const d = await db()
-  const res: ImportResult = { runs: 0, daily: 0, gym: 0, marks: 0 }
+  const res: ImportResult = { runs: 0, daily: 0, gym: 0, marks: 0, shoes: 0 }
   const tx = d.transaction(['runs', 'daily', 'gym', 'marks', 'meta'], 'readwrite')
 
   async function merge<S extends 'runs' | 'daily' | 'gym' | 'marks'>(store: S, items: LatihanDB[S]['value'][], key: (v: LatihanDB[S]['value']) => string) {
@@ -162,6 +175,15 @@ export async function importAll(raw: unknown, opts: { includeProfile?: boolean }
   await merge('daily', f.daily, (v) => v.date)
   await merge('gym', f.gym, (v) => v.id)
   await merge('marks', f.marks, (v) => v.date)
+  if (Array.isArray(f.shoes) && f.shoes.length) {
+    const meta = tx.objectStore('meta')
+    const shoes = new Map(((await meta.get('shoes')) as Shoe[] | undefined ?? []).map((s) => [s.id, s]))
+    for (const s of f.shoes) {
+      const cur = shoes.get(s.id)
+      if (!cur || cur.updatedAt <= s.updatedAt) { shoes.set(s.id, s); res.shoes++ }
+    }
+    await meta.put([...shoes.values()], 'shoes')
+  }
   if (opts.includeProfile && f.profile) await tx.objectStore('meta').put(f.profile, 'profile')
   await tx.done
   return res

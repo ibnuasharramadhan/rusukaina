@@ -6,6 +6,7 @@ import { Card, Field, LevelBadge, num, PageHeader, Segmented } from '../componen
 import { GYM, GYM_RULES } from '../data/gym'
 import { sessionOn } from '../data/plan'
 import { importActivityFiles } from '../lib/activityFile'
+import { defaultShoeId, painVerdict } from '../lib/body'
 import { formatDate, today } from '../lib/date'
 import { deleteDaily, deleteGym, deleteRun, saveGym, saveRun, uid } from '../lib/db'
 import { formatDuration, formatPace, paceSecPerKm, parseDuration } from '../lib/pace'
@@ -41,7 +42,7 @@ export function Log({ params }: { params: URLSearchParams }) {
 // ---------- Lari
 
 function RunSection({ params }: { params: URLSearchParams }) {
-  const { runs, walks, profile, refresh, strava, stravaBusy, syncStrava } = useData()
+  const { runs, walks, shoes, profile, refresh, strava, stravaBusy, syncStrava } = useData()
   const all = [...runs, ...walks].sort((a, b) => (a.date + (a.time ?? '')).localeCompare(b.date + (b.time ?? '')))
   const editing = all.find((r) => r.id === params.get('id'))
   const initialDate = editing?.date ?? params.get('date') ?? today()
@@ -58,7 +59,9 @@ function RunSection({ params }: { params: URLSearchParams }) {
     rpe: editing?.rpe ? String(editing.rpe) : '',
     splits: editing?.splits ?? '',
     notes: editing?.notes ?? '',
+    shoeId: editing ? editing.shoeId ?? '' : defaultShoeId(shoes, all) ?? '',
   }))
+  const shoeOptions = shoes.filter((x) => !x.retired || x.id === f.shoeId)
   const [err, setErr] = useState('')
   const [saved, setSaved] = useState<RunLog | null>(null)
   const [sharing, setSharing] = useState<RunLog | null>(null)
@@ -81,7 +84,7 @@ function RunSection({ params }: { params: URLSearchParams }) {
     const run: RunLog = {
       id: editing?.id ?? uid(), date: f.date, time: f.time || undefined, type: f.type,
       distanceKm: dist, durationSec: dur, avgHr: avg, maxHr: num(f.maxHr), cadence: num(f.cadence), rpe: num(f.rpe),
-      splits: f.splits.trim() || undefined, notes: f.notes.trim() || undefined,
+      splits: f.splits.trim() || undefined, notes: f.notes.trim() || undefined, shoeId: f.shoeId || undefined,
       createdAt: editing?.createdAt ?? now, updatedAt: now,
     }
     await saveRun(run)
@@ -89,7 +92,7 @@ function RunSection({ params }: { params: URLSearchParams }) {
     await refresh()
     setErr('')
     setSaved(run)
-    if (!editing) setF({ ...f, distance: '', duration: '', avgHr: '', maxHr: '', cadence: '', rpe: '', splits: '', notes: '' })
+    if (!editing) setF({ ...f, distance: '', duration: '', avgHr: '', maxHr: '', cadence: '', rpe: '', splits: '', notes: '', shoeId: f.shoeId })
   }
 
   return (
@@ -124,7 +127,15 @@ function RunSection({ params }: { params: URLSearchParams }) {
             <Field label="RPE (1–10)"><input inputMode="numeric" value={f.rpe} onChange={set('rpe')} /></Field>
             <div className="span2"><Field label="Split per km"><input value={f.splits} onChange={set('splits')} placeholder="7:16, 6:46, …" /></Field></div>
           </div>
-          <Field label="Catatan"><textarea rows={2} value={f.notes} onChange={set('notes')} placeholder="Rasa napas, cuaca, sepatu…" /></Field>
+          {shoeOptions.length > 0 && (
+            <Field label="Sepatu">
+              <select value={f.shoeId} onChange={set('shoeId')}>
+                <option value="">Tidak dicatat</option>
+                {shoeOptions.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+              </select>
+            </Field>
+          )}
+          <Field label="Catatan"><textarea rows={2} value={f.notes} onChange={set('notes')} placeholder="Rasa napas, cuaca, …" /></Field>
           {err && <p className="error" role="alert">{err}</p>}
           <div className="row">
             <button className="btn primary" type="submit">Simpan</button>
@@ -218,7 +229,7 @@ function GymSection({ params }: { params: URLSearchParams }) {
   const [notes, setNotes] = useState(editing?.notes ?? '')
   const saved = params.get('saved') === '1'
   const d = daily.find((x) => x.date === date)
-  const ready = readiness({ sys: d?.sys, dia: d?.dia, restingHr: d?.restingHr, sleepHours: d?.sleepHours, baseline: profile.restingHrBaseline, trackBp: profile.trackBp })
+  const ready = readiness({ sys: d?.sys, dia: d?.dia, restingHr: d?.restingHr, sleepHours: d?.sleepHours, baseline: profile.restingHrBaseline, trackBp: profile.trackBp, pain: painVerdict(daily, date) })
 
   const initialSets = useMemo(() => GYM[workout].map((ex): GymSet => {
     const prev = editing?.workout === workout ? editing.exercises.find((e) => e.exercise === ex.name) : undefined
@@ -360,12 +371,13 @@ function DailySection({ params }: { params: URLSearchParams }) {
         {!daily.length && <p className="muted">Belum ada catatan.</p>}
         <ul className="history">
           {[...daily].reverse().map((d) => {
-            const r = readiness({ sys: d.sys, dia: d.dia, restingHr: d.restingHr, sleepHours: d.sleepHours, baseline: profile.restingHrBaseline, trackBp: profile.trackBp })
+            const r = readiness({ sys: d.sys, dia: d.dia, restingHr: d.restingHr, sleepHours: d.sleepHours, baseline: profile.restingHrBaseline, trackBp: profile.trackBp, pain: painVerdict(daily, d.date) })
             return (
               <li key={d.date}>
                 <div className="grow">
                   <b>{formatDate(d.date, true)}</b>{profile.trackBp && ` · ${d.sys && d.dia ? `${d.sys}/${d.dia}` : '–'}`} · HR {d.restingHr ?? '–'}
                   {d.sleepHours != null && ` · tidur ${d.sleepHours} j`}
+                  {!!d.painAreas?.length && ` · nyeri ${d.painAreas.join(', ').toLowerCase()}${d.painScore ? ` ${d.painScore}/10` : ''}`}
                   <div><LevelBadge level={r.level} /></div>
                 </div>
                 <button className="link" onClick={() => setDate(d.date)}>Ubah</button>

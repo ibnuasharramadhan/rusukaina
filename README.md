@@ -21,6 +21,10 @@ Aplikasi web progresif (PWA) untuk menjalankan program latihan 10 minggu menuju 
 - HR istirahat ≥ baseline + 7 (58 → 65) → ganti jalan santai.
 - Tidur < 6 jam → jalan kaki atau skip.
 - Lari easy dengan HR rata-rata > 145 diberi peringatan "terlalu cepat".
+- Nyeri (`src/lib/body.ts`): skala 1–3 dipantau, 4–5 → latihan lebih ringan, ≥6 atau di tempat yang sama 3 hari dalam seminggu → istirahatkan lari dan periksakan.
+
+### Sepatu
+Daftar sepatu di Info (km awal + semua lari yang memakainya, batas ganti default 700 km). Pengingat muncul di Hari ini saat sepatu aktif mencapai 90% batas. Sepatu ikut ekspor/impor JSON (`shoes`, opsional supaya file lama tetap valid).
 
 ## Teknologi
 

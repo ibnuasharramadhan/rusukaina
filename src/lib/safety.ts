@@ -74,8 +74,26 @@ export interface Readiness {
 /** Tanpa tensimeter: tensi terakhir yang diketahui 148/83 (kuning), jadi batasan kuning tetap berlaku. */
 export const NO_BP_NOTE = 'Tensi belum dipantau (terakhir 148/83): tanpa strides dan beban gym tidak dinaikkan sampai tensi bisa dicek.'
 
-export function readiness(input: { sys?: number; dia?: number; restingHr?: number; sleepHours?: number; baseline: number; trackBp?: boolean }): Readiness {
-  if (input.trackBp === false) return readinessWithoutBp(input)
+export function readiness(input: { sys?: number; dia?: number; restingHr?: number; sleepHours?: number; baseline: number; trackBp?: boolean; pain?: Verdict }): Readiness {
+  const r = input.trackBp === false ? readinessWithoutBp(input) : readinessWithBp(input)
+  return withPain(r, input.pain)
+}
+
+/** Nyeri ikut menentukan kesiapan: nyeri merah = tidak lari hari ini. */
+function withPain(r: Readiness, pain?: Verdict): Readiness {
+  if (!pain || pain.level === 'unknown') return r
+  const level = r.level === 'unknown' && pain.level === 'green' ? r.level : worst(r.level, pain.level)
+  const painWins = (pain.level === 'red' && r.level !== 'critical') || (pain.level === 'yellow' && (r.level === 'green' || r.level === 'unknown'))
+  return {
+    ...r,
+    level,
+    headline: painWins ? pain.title : r.headline,
+    verdicts: [...r.verdicts, pain],
+    canTrain: level === 'green' || level === 'yellow',
+  }
+}
+
+function readinessWithBp(input: { sys?: number; dia?: number; restingHr?: number; sleepHours?: number; baseline: number }): Readiness {
   const bp = bpVerdict(input.sys, input.dia)
   const hr = restingHrVerdict(input.restingHr, input.baseline)
   const sl = sleepVerdict(input.sleepHours)
