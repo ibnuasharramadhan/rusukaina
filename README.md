@@ -36,12 +36,13 @@ singkat dan mendapat rencana yang disusun otomatis dengan aturan yang sama.
 
 | | |
 |---|---|
-| **Cek kesiapan pagi** | HR istirahat, tidur, tensi (opsional), dan nyeri → hijau / kuning / merah. Sesi hari ini ikut menyesuaikan, misalnya strides dicoret atau lari diganti jalan santai. |
+| **Cek kesiapan pagi** | HR istirahat, tidur, tensi (opsional), nyeri, dan keluhan obat (pusing, batuk kering) → hijau / kuning / merah. Sesi hari ini ikut menyesuaikan, misalnya strides dicoret atau lari diganti jalan santai. |
 | **Rencana otomatis** | Onboarding 3 langkah → rencana sampai hari race: long run naik ±10% per minggu, deload tiap minggu ke-4, taper, maks 3 lari per minggu, tidak pernah 2 hari berturut-turut. |
 | **Catat** | Lari dan jalan kaki (pace live, zona HR, split, sepatu), Gym A/B dengan saran naik beban, HR istirahat, tidur, dan nyeri. |
 | **Impor dari jam** | File **GPX, TCX, FIT** (Garmin, Coros, Huawei, dll.), beberapa sekaligus, atau sinkron otomatis lewat Strava. |
 | **Progres** | Konsistensi, HR istirahat, pace, HR saat lari vs batas easy, efisiensi aerobik (meter per detak), km per minggu. Setiap grafik punya tooltip dan tampilan tabel. |
 | **Kartu share** | Gambar 4:5 siap IG/WA: jarak, pace, HR, split per km, dan progres menuju race. |
+| **Obat** | Pengingat jadwal minum saat aplikasi dibuka, aturan dari dokter, dan minggu pertama obat baru yang otomatis dibuat easy. |
 | **Sepatu** | Km per sepatu dan pengingat ganti di 90% batas. |
 | **Ringkasan untuk coach** | Teks 7 hari siap tempel ke chat, plus ekspor/impor JSON untuk cadangan dan pindah HP. |
 
@@ -100,7 +101,7 @@ flowchart LR
 
 ## Kualitas
 
-- **81 tes** (Vitest + `fake-indexeddb`): aturan keamanan, generator rencana, parser GPX/TCX/FIT (termasuk file FIT sintetis), sinkron Strava, IndexedDB, dan ekspor/impor.
+- **91 tes** (Vitest + `fake-indexeddb`): aturan keamanan, generator rencana, parser GPX/TCX/FIT (termasuk file FIT sintetis), sinkron Strava, IndexedDB, dan ekspor/impor.
 - **CI di setiap PR**: typecheck, tes, dan build. Deploy ke GitHub Pages otomatis dari `master`.
 - **Aksesibilitas**: 0 pelanggaran axe-core di semua layar (terang dan gelap, lebar 360 px). Setiap grafik juga punya tampilan tabel.
 - **TypeScript strict** di seluruh kode.
