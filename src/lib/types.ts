@@ -72,6 +72,11 @@ export interface DailyLog {
   diaPm?: number
   sleepHours?: number
   medTaken?: boolean
+  /** Jam dosis yang sudah diminum hari ini (cocok dengan Profile.medSchedule[].time). */
+  medDoses?: string[]
+  /** Keluhan yang perlu dicek bila minum obat tensi. */
+  dizzy?: boolean
+  dryCough?: boolean
   symptoms?: string
   /** Bagian tubuh yang nyeri hari ini (lihat PAIN_AREAS). */
   painAreas?: string[]
@@ -121,8 +126,20 @@ export interface Profile {
   trackBp: boolean
   /** Nama obat tensi yang diminum rutin (mis. "Amlodipin"); kosong = tidak ada. */
   medName?: string
+  /** Tanggal mulai obat saat ini; 7 hari pertama latihan dibuat easy. */
+  medStart?: ISODate
+  /** Jadwal minum obat, untuk pengingat saat aplikasi dibuka. */
+  medSchedule?: MedDose[]
+  /** Aturan dari dokter (mis. obat yang harus dihindari), satu per baris. */
+  medNotes?: string
   /** Sumber rencana. Kosong = profil lama milik Ibnu (preset). */
   plan?: PlanSource
+}
+
+export interface MedDose {
+  /** "HH:MM" */
+  time: string
+  label?: string
 }
 
 /** Rencana dari preset coach, atau disusun otomatis dari jawaban onboarding. */

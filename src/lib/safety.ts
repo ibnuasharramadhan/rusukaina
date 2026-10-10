@@ -82,13 +82,21 @@ export function readiness(input: {
   sys?: number; dia?: number; restingHr?: number; sleepHours?: number; baseline: number; trackBp?: boolean; pain?: Verdict
   /** Punya hipertensi (minum obat tensi). Default true supaya aman. */
   hypertension?: boolean
+  /** Keluhan obat (pusing / batuk kering), lihat symptomVerdict. */
+  symptoms?: Verdict
+  /** Minggu pertama obat baru: semua latihan easy, tanpa strides, beban tidak dinaikkan. */
+  newMedication?: boolean
 }): Readiness {
-  const r = input.trackBp === false ? readinessWithoutBp(input) : readinessWithBp(input)
-  return withPain(r, input.pain)
+  const base = input.trackBp === false ? readinessWithoutBp(input) : readinessWithBp(input)
+  const r = withExtra(withExtra(base, input.symptoms), input.pain)
+  return input.newMedication ? { ...r, noStrides: true, noLoadIncrease: true } : r
 }
 
-/** Nyeri ikut menentukan kesiapan: nyeri merah = tidak lari hari ini. */
-function withPain(r: Readiness, pain?: Verdict): Readiness {
+/**
+ * Nyeri dan keluhan ikut menentukan kesiapan: merah = tidak latihan hari ini.
+ * Tidak pernah menutupi peringatan tensi kritis.
+ */
+function withExtra(r: Readiness, pain?: Verdict): Readiness {
   if (!pain || pain.level === 'unknown') return r
   const level = r.level === 'unknown' && pain.level === 'green' ? r.level : worst(r.level, pain.level)
   const painWins = (pain.level === 'red' && r.level !== 'critical') || (pain.level === 'yellow' && (r.level === 'green' || r.level === 'unknown'))

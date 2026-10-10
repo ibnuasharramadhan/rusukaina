@@ -87,11 +87,18 @@ export function bpAverage(daily: DailyLog[], days: number, until: ISODate): { sy
   return { sys, dia, n: rows.length }
 }
 
+function medLine(d: DailyLog, times: string[], until: ISODate): string | null {
+  if (!times.length || !d.medDoses) return d.medTaken === false ? 'obat terlewat' : null
+  const missed = times.filter((x) => !d.medDoses!.includes(x))
+  if (!missed.length) return `obat ${times.length}/${times.length}`
+  return d.date < until ? `obat terlewat ${missed.join(', ')}` : `obat ${times.length - missed.length}/${times.length}`
+}
+
 /**
  * Ringkasan teks untuk ditempel ke chat coach. Sengaja plain text supaya
  * terbaca di mana saja (chat, WhatsApp, catatan).
  */
-export function coachSummary(input: { runs: RunLog[]; walks?: RunLog[]; daily: DailyLog[]; gym: GymLog[]; until: ISODate; days?: number }): string {
+export function coachSummary(input: { runs: RunLog[]; walks?: RunLog[]; daily: DailyLog[]; gym: GymLog[]; until: ISODate; days?: number; medTimes?: string[] }): string {
   const days = input.days ?? 7
   const from = addDays(input.until, -(days - 1))
   const inRange = (d: ISODate) => d >= from && d <= input.until
@@ -125,7 +132,9 @@ export function coachSummary(input: { runs: RunLog[]; walks?: RunLog[]; daily: D
       d.sysPm && d.diaPm ? `malam ${d.sysPm}/${d.diaPm}` : null,
       d.restingHr ? `HR ${d.restingHr}` : null,
       d.sleepHours != null ? `tidur ${d.sleepHours} j` : null,
-      d.medTaken === false ? 'obat terlewat' : null,
+      medLine(d, input.medTimes ?? [], input.until),
+      d.dizzy ? 'pusing' : null,
+      d.dryCough ? 'batuk kering' : null,
       d.symptoms ? `keluhan: ${d.symptoms}` : null,
       d.painAreas?.length ? `nyeri ${d.painAreas.join(', ').toLowerCase()}${d.painScore ? ` ${d.painScore}/10` : ''}` : null,
     ].filter(Boolean)

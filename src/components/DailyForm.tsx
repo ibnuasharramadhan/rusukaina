@@ -17,7 +17,9 @@ export function DailyForm({ date, compact, onSaved }: { date: string; compact?: 
     sleepHours: s(existing?.sleepHours), sysPm: s(existing?.sysPm), diaPm: s(existing?.diaPm),
     medTaken: existing?.medTaken ?? true, symptoms: existing?.symptoms ?? '', notes: existing?.notes ?? '',
     painAreas: existing?.painAreas ?? [], painScore: s(existing?.painScore),
+    dizzy: !!existing?.dizzy, dryCough: !!existing?.dryCough,
   })
+  const scheduled = !!profile.medSchedule?.length
   const [err, setErr] = useState('')
   // Di kartu Hari ini (compact), pilihan nyeri disembunyikan sampai dibutuhkan.
   const [showPain, setShowPain] = useState(!compact || !!existing?.painAreas?.length)
@@ -33,9 +35,13 @@ export function DailyForm({ date, compact, onSaved }: { date: string; compact?: 
     if (hr != null && (hr < 30 || hr > 130)) return setErr('HR istirahat tidak masuk akal.')
     const pain = num(f.painScore)
     if (pain != null && (pain < 1 || pain > 10)) return setErr('Skala nyeri 1–10.')
+    // Tanda minum obat bisa berubah dari kartu "Obat hari ini" setelah form ini dibuka.
+    const cur = daily.find((d) => d.date === date)
     const entry: DailyLog = {
       date, sys, dia, restingHr: hr, sleepHours: num(f.sleepHours),
-      sysPm: num(f.sysPm), diaPm: num(f.diaPm), medTaken: profile.medName ? f.medTaken : undefined,
+      sysPm: num(f.sysPm), diaPm: num(f.diaPm),
+      medTaken: !profile.medName ? undefined : scheduled ? cur?.medTaken : f.medTaken, medDoses: cur?.medDoses,
+      dizzy: profile.medName && f.dizzy ? true : undefined, dryCough: profile.medName && f.dryCough ? true : undefined,
       symptoms: f.symptoms.trim() || undefined, notes: f.notes.trim() || undefined,
       painAreas: f.painAreas.length ? f.painAreas : undefined, painScore: f.painAreas.length ? pain : undefined, updatedAt: Date.now(),
     }
@@ -66,7 +72,14 @@ export function DailyForm({ date, compact, onSaved }: { date: string; compact?: 
           <Field label="Tidur (jam)"><input inputMode="decimal" value={f.sleepHours} onChange={set('sleepHours')} placeholder="7" /></Field>
         </div>
       )}
-      {profile.medName && <label className="check"><input type="checkbox" checked={f.medTaken} onChange={set('medTaken')} /> {profile.medName} sudah diminum</label>}
+      {profile.medName && !scheduled && <label className="check"><input type="checkbox" checked={f.medTaken} onChange={set('medTaken')} /> {profile.medName} sudah diminum</label>}
+      {profile.medName && (
+        <fieldset className="symptoms">
+          <legend className="field-l">Keluhan pagi ini</legend>
+          <label className="check"><input type="checkbox" checked={f.dizzy} onChange={set('dizzy')} /> Pusing / kliyengan</label>
+          <label className="check"><input type="checkbox" checked={f.dryCough} onChange={set('dryCough')} /> Batuk kering</label>
+        </fieldset>
+      )}
       {!showPain && <button type="button" className="link small" style={{ justifySelf: 'start' }} onClick={() => setShowPain(true)}>Ada nyeri hari ini?</button>}
       {showPain && <fieldset className="pain">
         <legend className="field-l">Nyeri hari ini (kalau ada)</legend>

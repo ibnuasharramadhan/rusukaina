@@ -7,14 +7,15 @@ import { celebrate, originOf } from '../lib/motion'
 import { plan, sessionOn, weekOf } from '../data/plan'
 import { downloadBackup } from '../lib/backup'
 import { addDays, diffDays, formatDate, toISO, today } from '../lib/date'
-import { setMark } from '../lib/db'
+import { saveDaily, setMark } from '../lib/db'
+import { hasCheckin, newMedUntil, overdueDoses } from '../lib/meds'
 import { formatDuration, formatPace, paceSecPerKm } from '../lib/pace'
 import { href } from '../lib/router'
-import { bpLevel, readiness, restingHrVerdict, runFlags, sleepVerdict, STOP_SIGNS, type Level, type Readiness } from '../lib/safety'
+import { bpLevel, restingHrVerdict, runFlags, sleepVerdict, STOP_SIGNS, type Level, type Readiness } from '../lib/safety'
 import { backupDue, raceResult, runRuleWarnings, statusOf } from '../lib/stats'
-import { painVerdict, shoeKm, shoeState } from '../lib/body'
+import { dayReadiness, shoeKm, shoeState } from '../lib/body'
 import { useData } from '../lib/store'
-import type { DailyLog, PlannedSession, RunLog } from '../lib/types'
+import type { DailyLog, PlannedSession, Profile, RunLog } from '../lib/types'
 
 const km = (n: number) => String(n).replace('.', ',')
 
@@ -23,7 +24,8 @@ export function Today() {
   const t = today()
   const d = daily.find((x) => x.date === t)
   const [editing, setEditing] = useState(false)
-  const r = readiness({ sys: d?.sys, dia: d?.dia, restingHr: d?.restingHr, sleepHours: d?.sleepHours, baseline: profile.restingHrBaseline, trackBp: profile.trackBp, hypertension: !!profile.medName, pain: painVerdict(daily, t) })
+  const r = dayReadiness(profile, daily, t)
+  const medWeekUntil = newMedUntil(profile, t)
   const session = sessionOn(t)
   const week = weekOf(t)
   const daysToRace = diffDays(t, profile.raceDate)
@@ -70,17 +72,29 @@ export function Today() {
         )}
       </header>
 
-      {!d || editing ? (
+      {medWeekUntil && (
+        <aside className="note" aria-label="Minggu pertama obat baru">
+          <Icon name="alert" size={18} />
+          <p>
+            <b>Minggu pertama {profile.medName} (sampai {formatDate(medWeekUntil)}).</b> Semua latihan easy dan tanpa strides,
+            beban gym tidak dinaikkan, pendinginan 5–10 menit, dan bangun pelan-pelan dari duduk atau jongkok. Kalau pusing, berhenti dan duduk.
+          </p>
+        </aside>
+      )}
+
+      {!hasCheckin(d) || editing ? (
         <Card title="Cek kesiapan" className="ready lv-unknown">
           <p className="small muted">Isi sebelum latihan. Aplikasi akan menyesuaikan sesi hari ini.</p>
           <DailyForm date={t} compact onSaved={() => setEditing(false)} />
         </Card>
       ) : (
-        <ReadinessCard d={d} r={r} baseline={profile.restingHrBaseline} trackBp={profile.trackBp} onEdit={() => setEditing(true)} />
+        <ReadinessCard d={d!} r={r} baseline={profile.restingHrBaseline} trackBp={profile.trackBp} onEdit={() => setEditing(true)} />
       )}
 
+      {profile.medName && !!profile.medSchedule?.length && <MedsCard profile={profile} d={d} t={t} onSaved={refresh} />}
+
       {session ? (
-        <TodaySession session={session} easyCap={profile.easyCap} canTrain={r.level === 'unknown' || r.canTrain} noStrides={r.noStrides} status={status} onMark={mark} ruleWarnings={runRuleWarnings(t, runs)} />
+        <TodaySession session={session} easyCap={profile.easyCap} canTrain={r.level === 'unknown' || r.canTrain} noStrides={r.noStrides} stridesNote={medWeekUntil ? 'Minggu pertama obat baru: lewati strides, lari easy saja.' : 'Tensi belum terpantau di bawah 140/90: lewati strides, lari easy saja.'} status={status} onMark={mark} ruleWarnings={runRuleWarnings(t, runs)} />
       ) : (
         <Card title="Hari ini">
           <p>{t < planStart ? `Program mulai ${formatDate(planStart)}.` : t > planEnd ? `Program menuju ${profile.raceName} sudah selesai. Saatnya menyusun rencana berikutnya.` : 'Tidak ada sesi.'}</p>
@@ -159,6 +173,43 @@ export function Today() {
   )
 }
 
+function MedsCard({ profile, d, t, onSaved }: { profile: Profile; d?: DailyLog; t: string; onSaved: () => Promise<void> }) {
+  const schedule = profile.medSchedule ?? []
+  const taken = d?.medDoses ?? []
+  const now = new Date().toTimeString().slice(0, 5)
+  const late = new Set(overdueDoses(schedule, taken, now).map((x) => x.time))
+  const notes = (profile.medNotes ?? '').split('\n').map((x) => x.trim()).filter(Boolean)
+
+  async function toggle(time: string) {
+    const next = taken.includes(time) ? taken.filter((x) => x !== time) : [...taken, time].sort()
+    await saveDaily({ ...(d ?? { date: t }), medDoses: next, medTaken: next.length >= schedule.length ? true : undefined, updatedAt: Date.now() })
+    await onSaved()
+  }
+
+  return (
+    <Card title="Obat hari ini">
+      <ul className="doses">
+        {schedule.map((x) => {
+          const on = taken.includes(x.time)
+          return (
+            <li key={x.time} className="dose">
+              <span className="num dose-time">{x.time}</span>
+              <span className="grow">
+                <span className="dose-l">{x.label ?? profile.medName}</span>
+                {late.has(x.time) && <span className="dose-late">Belum diminum</span>}
+              </span>
+              <button className="btn small" aria-pressed={on} onClick={() => toggle(x.time)}>
+                {on ? <><Icon name="check" size={14} /> Sudah</> : 'Tandai diminum'}
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+      {notes.length > 0 && <ul className="small med-notes">{notes.map((n) => <li key={n}>{n}</li>)}</ul>}
+    </Card>
+  )
+}
+
 function BigStat({ value, unit, tone }: { value: React.ReactNode; unit: string; tone?: 'warn' }) {
   return (
     <div className={`big-stat ${tone ?? ''}`}>
@@ -223,8 +274,8 @@ function ReadinessCard({ d, r, baseline, trackBp, onEdit }: { d: DailyLog; r: Re
   )
 }
 
-function TodaySession({ session, easyCap, canTrain, noStrides, status, onMark, ruleWarnings }: {
-  session: PlannedSession; easyCap: number; canTrain: boolean; noStrides: boolean; status: string | null; onMark: (s: 'done' | 'skipped' | null, origin?: { x: number; y: number }) => void; ruleWarnings: string[]
+function TodaySession({ session, easyCap, canTrain, noStrides, stridesNote, status, onMark, ruleWarnings }: {
+  session: PlannedSession; easyCap: number; canTrain: boolean; noStrides: boolean; stridesNote: string; status: string | null; onMark: (s: 'done' | 'skipped' | null, origin?: { x: number; y: number }) => void; ruleWarnings: string[]
 }) {
   const isGym = session.kind === 'gymA' || session.kind === 'gymB'
   const isRun = session.kind === 'easy' || session.kind === 'long' || session.kind === 'race'
@@ -245,7 +296,7 @@ function TodaySession({ session, easyCap, canTrain, noStrides, status, onMark, r
       )}
       {session.detail && <p className="muted small">{session.detail}</p>}
       {blocked && <p className="swap">Hari ini diganti: <b>jalan santai saja</b>.</p>}
-      {canTrain && noStrides && session.strides && <p className="swap">Tensi belum terpantau di bawah 140/90: lewati strides, lari easy saja.</p>}
+      {canTrain && noStrides && session.strides && <p className="swap">{stridesNote}</p>}
       {isRun && !status && ruleWarnings.map((w) => <p key={w} className="swap">{w}</p>)}
       {isRun && canTrain && !status && <p className="hint">Easy = masih bisa ngobrol kalimat penuh. Kalau HR lewat {easyCap}, jalan sampai ~130.</p>}
       {status ? (

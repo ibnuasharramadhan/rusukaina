@@ -8,6 +8,7 @@ import { plan } from '../data/plan'
 import { formatDate, today } from '../lib/date'
 import { href } from '../lib/router'
 import { importAll, saveProfile, wipeAll } from '../lib/db'
+import { formatMedSchedule, parseMedSchedule } from '../lib/meds'
 import { useInstallPrompt } from '../lib/pwa'
 import { STOP_SIGNS } from '../lib/safety'
 import { coachSummary } from '../lib/stats'
@@ -69,6 +70,12 @@ function Safety() {
       <p className="small">HR istirahat naik &gt;7 bpm dari biasanya → ganti jadi jalan santai. Tidur 5–6 jam → gym 1–2 set, lari lebih pendek. Tidur &lt;5 jam → skip, jalan 20'.</p>
       <p className="small"><b>Napas saat angkat beban:</b> hembuskan saat fase berat, tarik saat turun. Jangan menahan napas / mengejan (Valsalva).</p>
       {profile.medName && <p className="small"><b>{profile.medName}:</b> waspada pusing saat berdiri tiba-tiba. Pendinginan bertahap. Jangan ubah dosis sendiri.</p>}
+      {profile.medName && profile.medNotes?.trim() && (
+        <>
+          <p className="small"><b>Aturan dari dokter:</b></p>
+          <ul className="small">{profile.medNotes.split('\n').map((x) => x.trim()).filter(Boolean).map((x) => <li key={x}>{x}</li>)}</ul>
+        </>
+      )}
       <p className="small"><b>Berhenti & cari pertolongan:</b> {STOP_SIGNS.join('; ').toLowerCase()}.</p>
       <p className="muted small">Aplikasi ini alat bantu catatan, bukan pengganti dokter.</p>
     </Card>
@@ -118,11 +125,11 @@ function PlanCard() {
 }
 
 function DataTools() {
-  const { runs, walks, daily, gym, refresh } = useData()
+  const { runs, walks, daily, gym, profile, refresh } = useData()
   const [msg, setMsg] = useState('')
   const [confirmWipe, setConfirmWipe] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
-  const summary = coachSummary({ runs, walks, daily, gym, until: today(), days: 7 })
+  const summary = coachSummary({ runs, walks, daily, gym, until: today(), days: 7, medTimes: profile.medSchedule?.map((x) => x.time) })
 
   async function doExport() {
     await downloadBackup()
@@ -189,16 +196,24 @@ function ProfileForm() {
   const { profile, refresh } = useData()
   const [f, setF] = useState({
     name: profile.name, birthDate: profile.birthDate, rest: String(profile.restingHrBaseline), max: String(profile.maxHr), cap: String(profile.easyCap),
-    trackBp: profile.trackBp, medName: profile.medName ?? '',
+    trackBp: profile.trackBp, medName: profile.medName ?? '', medStart: profile.medStart ?? '',
+    medSchedule: formatMedSchedule(profile.medSchedule), medNotes: profile.medNotes ?? '',
   })
   const [ok, setOk] = useState(false)
-  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => { setF({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }); setOk(false) }
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const value = e.target instanceof HTMLInputElement && e.target.type === 'checkbox' ? e.target.checked : e.target.value
+    // Ganti obat → tanggal mulai otomatis hari ini (masih bisa diubah sebelum disimpan).
+    const medStart = k === 'medName' && f.medStart === (profile.medStart ?? '') && value !== (profile.medName ?? '') ? today() : f.medStart
+    setF({ ...f, medStart, [k]: value })
+    setOk(false)
+  }
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     await saveProfile({
       ...profile, name: f.name.trim() || profile.name, birthDate: f.birthDate || profile.birthDate,
       restingHrBaseline: num(f.rest) ?? profile.restingHrBaseline, maxHr: num(f.max) ?? profile.maxHr, easyCap: num(f.cap) ?? profile.easyCap,
-      trackBp: f.trackBp, medName: f.medName.trim() || undefined,
+      trackBp: f.trackBp, medName: f.medName.trim() || undefined, medStart: f.medStart || undefined,
+      medSchedule: parseMedSchedule(f.medSchedule).length ? parseMedSchedule(f.medSchedule) : undefined, medNotes: f.medNotes.trim() || undefined,
     })
     await refresh()
     setOk(true)
@@ -217,7 +232,16 @@ function ProfileForm() {
         </div>
         <p className="hint">Ubah angka ini hanya setelah diskusi dengan coach/dokter. Zona HR dihitung ulang otomatis.</p>
         <label className="check"><input type="checkbox" checked={f.trackBp} onChange={set('trackBp')} /> Saya punya tensimeter (tampilkan input & grafik tensi)</label>
-        <Field label="Obat tensi rutin (kosongkan kalau tidak ada)"><input value={f.medName} onChange={set('medName')} /></Field>
+        <Field label="Obat tensi rutin (kosongkan kalau tidak ada)"><input value={f.medName} onChange={set('medName')} placeholder="mis. Amlodipin 5 mg" /></Field>
+        {f.medName.trim() && (
+          <>
+            <Field label="Mulai minum obat ini"><input type="date" value={f.medStart} onChange={set('medStart')} /></Field>
+            <p className="hint">7 hari pertama obat baru: semua latihan dibuat easy, tanpa strides, beban gym tidak naik.</p>
+            <Field label="Jadwal minum (jam dan nama, pisahkan koma)"><input value={f.medSchedule} onChange={set('medSchedule')} placeholder="06:00 obat pagi, 18:00 obat sore" /></Field>
+            <p className="hint">Muncul sebagai pengingat di Hari ini saat aplikasi dibuka.</p>
+            <Field label="Aturan dari dokter (satu per baris)"><textarea rows={3} value={f.medNotes} onChange={set('medNotes')} placeholder="mis. hindari ibuprofen, pakai parasetamol" /></Field>
+          </>
+        )}
         <div className="row"><button className="btn primary">Simpan profil</button>{ok && <span role="status">✓ Tersimpan</span>}</div>
       </form>
     </Card>

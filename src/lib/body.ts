@@ -3,8 +3,19 @@
 // berulang di tempat yang sama = istirahat lari dan periksakan.
 
 import { addDays, type ISODate } from './date'
-import type { Verdict } from './safety'
-import type { DailyLog, RunLog, Shoe } from './types'
+import { newMedUntil, symptomVerdict } from './meds'
+import { readiness, type Readiness, type Verdict } from './safety'
+import type { DailyLog, Profile, RunLog, Shoe } from './types'
+
+/** Kesiapan satu hari dari profil + catatan harian (tensi, HR, tidur, nyeri, keluhan obat). */
+export function dayReadiness(profile: Profile, daily: DailyLog[], date: ISODate): Readiness {
+  const d = daily.find((x) => x.date === date)
+  return readiness({
+    sys: d?.sys, dia: d?.dia, restingHr: d?.restingHr, sleepHours: d?.sleepHours, baseline: profile.restingHrBaseline,
+    trackBp: profile.trackBp, hypertension: !!profile.medName, pain: painVerdict(daily, date),
+    symptoms: profile.medName ? symptomVerdict(d) : undefined, newMedication: !!newMedUntil(profile, date),
+  })
+}
 
 export const PAIN_AREAS = ['Lutut', 'Tulang kering', 'Betis', 'Achilles', 'Telapak kaki', 'Pergelangan kaki', 'Paha belakang', 'Pinggul', 'Punggung bawah']
 
