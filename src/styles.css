@@ -550,3 +550,7 @@ details summary { cursor: pointer; font-weight: 600; }
 .dose-late { display: block; font-size: 0.8rem; color: var(--critical-text); font-weight: 600; }
 .dose .btn[aria-pressed='true'] { background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good-ink); border-color: transparent; }
 .med-notes { margin: 0; padding-left: 18px; }
+
+/* Sumber zona HR */
+.zone-src { display: grid; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+.zone-src p { margin: 0; }
