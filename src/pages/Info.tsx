@@ -13,9 +13,10 @@ import { useInstallPrompt } from '../lib/pwa'
 import { STOP_SIGNS } from '../lib/safety'
 import { coachSummary } from '../lib/stats'
 import { useData } from '../lib/store'
-import { ageOn, karvonenZones, mafHr } from '../lib/zones'
+import { ageOn, easyCapFor, karvonenZones, mafHr, observedMaxHr, recentRestingHr, tanakaMaxHr } from '../lib/zones'
 
 export function Info() {
+  const { profile } = useData()
   return (
     <div className="page">
       <PageHeader eyebrow="Zona, aturan, data" title="Info & pengaturan" />
@@ -27,16 +28,29 @@ export function Info() {
       <GymGuide />
       <RaceDay />
       <DataTools />
-      <ProfileForm />
+      <ProfileForm key={`${profile.restingHrBaseline}-${profile.maxHr}-${profile.easyCap}`} />
       <About />
     </div>
   )
 }
 
 function Zones() {
-  const { profile } = useData()
+  const { profile, daily, runs, refresh } = useData()
   const zones = karvonenZones(profile.restingHrBaseline, profile.maxHr)
   const age = ageOn(profile.birthDate, today())
+  const recent = recentRestingHr(daily, today())
+  const peak = observedMaxHr(runs)
+  const formula = tanakaMaxHr(age)
+  // Rencana otomatis: batas easy dihitung dari zona, jadi ikut diperbarui. Rencana dari coach: batas easy tetap.
+  const generated = profile.plan?.kind === 'generated'
+  const restOffer = recent && Math.abs(recent.avg - profile.restingHrBaseline) >= 2 ? recent.avg : undefined
+  const maxOffer = peak && peak.hr > profile.maxHr ? peak.hr : undefined
+
+  async function apply(patch: { restingHrBaseline?: number; maxHr?: number }) {
+    const next = { ...profile, ...patch }
+    await saveProfile(generated ? { ...next, easyCap: easyCapFor(next.restingHrBaseline, next.maxHr) } : next)
+    await refresh()
+  }
   return (
     <Card title="Zona HR (Karvonen)">
       <p className="muted small">HR istirahat {profile.restingHrBaseline}, HR maks ~{profile.maxHr}. Batas lari easy: <b>≤{profile.easyCap}</b>. Cek silang MAF (180 − {age}{profile.medName ? ' − 10 karena obat' : ''}) = {mafHr(age, !!profile.medName)}.</p>
@@ -51,6 +65,25 @@ function Zones() {
           ))}
         </tbody>
       </table>
+      <div className="zone-src">
+        <p className="small">
+          <b>HR istirahat {profile.restingHrBaseline}.</b>{' '}
+          {recent ? `Rata-rata 14 hari terakhir ${recent.avg} (${recent.n} catatan).` : 'Isi HR istirahat tiap pagi; setelah 5 catatan aplikasi bisa menyarankan angka terbaru.'}
+        </p>
+        {restOffer && (
+          <div className="row wrap">
+            <button className="btn small" onClick={() => apply({ restingHrBaseline: restOffer })}>Pakai {restOffer}</button>
+            <span className="hint">Batas "kurang pulih" ikut jadi ≥{restOffer + 7}.</span>
+          </div>
+        )}
+        <p className="small">
+          <b>HR maks {profile.maxHr}.</b>{' '}
+          {peak ? `Tertinggi tercatat ${peak.hr} (${formatDate(peak.date)}).` : 'Belum ada HR maks dari lari yang dicatat.'}{' '}
+          Rumus usia (208 − 0,7 × {age}) = {formula}.
+        </p>
+        {maxOffer && <div className="row"><button className="btn small" onClick={() => apply({ maxHr: maxOffer })}>Pakai {maxOffer}</button></div>}
+        <p className="hint">HR tertinggi yang benar-benar terukur (mis. di akhir race) lebih akurat daripada rumus.{generated ? ' Batas easy ikut dihitung ulang.' : ` Batas easy ${profile.easyCap} tetap dari coach.`}</p>
+      </div>
     </Card>
   )
 }

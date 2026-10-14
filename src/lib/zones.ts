@@ -1,4 +1,5 @@
-import { fromISO, type ISODate } from './date'
+import { addDays, fromISO, type ISODate } from './date'
+import type { DailyLog, RunLog } from './types'
 
 export interface Zone {
   id: string
@@ -37,4 +38,29 @@ export function zoneFor(hr: number, zones: Zone[]): Zone | undefined {
 /** MAF: 180 − umur, dikurangi 10 karena minum obat rutin. */
 export function mafHr(age: number, onMedication: boolean): number {
   return 180 - age - (onMedication ? 10 : 0)
+}
+
+/** HR maks dari usia (Tanaka: 208 − 0,7 × usia). Hanya tebakan awal; HR tertinggi yang pernah terukur lebih akurat. */
+export function tanakaMaxHr(age: number): number {
+  return Math.round(208 - 0.7 * age)
+}
+
+/** Batas lari easy ≈ 67% cadangan HR (Karvonen). */
+export function easyCapFor(rest: number, max: number): number {
+  return Math.round(rest + 0.67 * (max - rest))
+}
+
+/** Rata-rata HR istirahat dalam `days` hari terakhir; butuh minimal 5 catatan supaya tidak bergantung satu pagi. */
+export function recentRestingHr(daily: DailyLog[], until: ISODate, days = 14): { avg: number; n: number } | undefined {
+  const from = addDays(until, -(days - 1))
+  const vals = daily.filter((d) => d.date >= from && d.date <= until && d.restingHr).map((d) => d.restingHr!)
+  if (vals.length < 5) return undefined
+  return { avg: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length), n: vals.length }
+}
+
+/** HR tertinggi yang pernah tercatat saat lari (nilai di atas 220 dianggap salah baca sensor). */
+export function observedMaxHr(runs: RunLog[]): { hr: number; date: ISODate } | undefined {
+  let best: { hr: number; date: ISODate } | undefined
+  for (const r of runs) if (r.maxHr && r.maxHr <= 220 && (!best || r.maxHr > best.hr)) best = { hr: r.maxHr, date: r.date }
+  return best
 }

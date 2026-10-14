@@ -8,15 +8,15 @@ import { celebrate, originOf } from '../lib/motion'
 import { href } from '../lib/router'
 import { useData } from '../lib/store'
 import type { PlanInput, Profile } from '../lib/types'
-import { ageOn } from '../lib/zones'
+import { ageOn, easyCapFor, tanakaMaxHr } from '../lib/zones'
 
 const DISTANCES = [5, 7, 10, 21.1]
 const km = (n: number) => String(n).replace('.', ',')
 
 /** HR maks (Tanaka) dan batas easy (≈67% cadangan HR, Karvonen), sama seperti hitungan untuk Ibnu. */
 export function hrDefaults(birthDate: string, rest: number, on = today()) {
-  const maxHr = Math.round(208 - 0.7 * ageOn(birthDate, on))
-  return { maxHr, easyCap: Math.round(rest + 0.67 * (maxHr - rest)) }
+  const maxHr = tanakaMaxHr(ageOn(birthDate, on))
+  return { maxHr, easyCap: easyCapFor(rest, maxHr) }
 }
 
 /** Kenalan, target, kondisi: tiga langkah untuk menyusun rencana sendiri. */
