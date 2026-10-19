@@ -33,6 +33,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: 'index.html',
+        // Notifikasi jadwal hari ini (Periodic Background Sync), lihat src/lib/notify.ts.
+        importScripts: ['notif-sw.js'],
       },
     }),
   ],

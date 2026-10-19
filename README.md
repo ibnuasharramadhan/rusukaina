@@ -43,6 +43,7 @@ singkat dan mendapat rencana yang disusun otomatis dengan aturan yang sama.
 | **Progres** | Konsistensi, HR istirahat, pace, HR saat lari vs batas easy, efisiensi aerobik (meter per detak), km per minggu. Setiap grafik punya tooltip dan tampilan tabel. |
 | **Kartu share** | Gambar 4:5 siap IG/WA: jarak, pace, HR, split per km, dan progres menuju race. |
 | **Obat** | Pengingat jadwal minum saat aplikasi dibuka, aturan dari dokter, dan minggu pertama obat baru yang otomatis dibuat easy. |
+| **Notifikasi jadwal** | Sekali sehari HP menampilkan sesi latihan hari itu walau aplikasi tertutup (Periodic Background Sync, tanpa server; Chrome Android, aplikasi terpasang). |
 | **Sepatu** | Km per sepatu dan pengingat ganti di 90% batas. |
 | **Ringkasan untuk coach** | Teks 7 hari siap tempel ke chat, plus ekspor/impor JSON untuk cadangan dan pindah HP. |
 
@@ -101,7 +102,7 @@ flowchart LR
 
 ## Kualitas
 
-- **94 tes** (Vitest + `fake-indexeddb`): aturan keamanan, generator rencana, parser GPX/TCX/FIT (termasuk file FIT sintetis), sinkron Strava, IndexedDB, dan ekspor/impor.
+- **96 tes** (Vitest + `fake-indexeddb`): aturan keamanan, generator rencana, parser GPX/TCX/FIT (termasuk file FIT sintetis), sinkron Strava, IndexedDB, dan ekspor/impor.
 - **CI di setiap PR**: typecheck, tes, dan build. Deploy ke GitHub Pages otomatis dari `master`.
 - **Aksesibilitas**: 0 pelanggaran axe-core di semua layar (terang dan gelap, lebar 360 px). Setiap grafik juga punya tampilan tabel.
 - **TypeScript strict** di seluruh kode.

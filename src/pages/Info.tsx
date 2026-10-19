@@ -1,10 +1,11 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ShoesCard } from '../components/ShoesCard'
 import { StravaCard } from '../components/StravaCard'
 import { Card, Field, num, PageHeader } from '../components/ui'
 import { COOLDOWN, GYM, GYM_RULES, WARMUP } from '../data/gym'
 import { downloadBackup } from '../lib/backup'
-import { plan } from '../data/plan'
+import { plan, sessionOn } from '../data/plan'
+import { disableNotif, enableNotif, notifEnabled, notifSupport, showTestNotif, type NotifSupport } from '../lib/notify'
 import { formatDate, today } from '../lib/date'
 import { href } from '../lib/router'
 import { importAll, saveProfile, wipeAll } from '../lib/db'
@@ -21,6 +22,7 @@ export function Info() {
     <div className="page">
       <PageHeader eyebrow="Zona, aturan, data" title="Info & pengaturan" />
       <PlanCard />
+      <NotifCard />
       <StravaCard />
       <ShoesCard />
       <Zones />
@@ -137,6 +139,47 @@ function RaceDay() {
   return (
     <Card title={`Strategi race ${formatDate(profile.raceDate)}`}>
       <ul className="small">{plan().raceTips.map((tip) => <li key={tip}>{tip}</li>)}</ul>
+    </Card>
+  )
+}
+
+function NotifCard() {
+  const [support, setSupport] = useState<NotifSupport | null>(null)
+  const [on, setOn] = useState(false)
+  const [msg, setMsg] = useState('')
+  useEffect(() => {
+    notifSupport().then(setSupport).catch(() => setSupport('no-notification'))
+    notifEnabled().then(setOn).catch(() => {})
+  }, [])
+  if (!support) return null
+
+  async function toggle() {
+    if (on) {
+      await disableNotif()
+      setOn(false)
+      setMsg('Notifikasi dimatikan.')
+      return
+    }
+    const err = await enableNotif(plan().schedule, today())
+    setOn(!err)
+    setMsg(err ?? 'Aktif. Notifikasi jadwal muncul sekali sehari setelah jam 05.00.')
+  }
+
+  return (
+    <Card title="Notifikasi jadwal">
+      <p className="small">Sekali sehari, HP menampilkan sesi latihan hari itu, walau Rusukaina sedang tertutup.</p>
+      {support === 'ok' ? (
+        <>
+          <div className="row wrap">
+            <button className={`btn ${on ? '' : 'primary'}`} onClick={toggle}>{on ? 'Matikan notifikasi' : 'Aktifkan notifikasi'}</button>
+            {on && <button className="btn ghost" onClick={() => showTestNotif(sessionOn(today())).catch(() => setMsg('Gagal menampilkan notifikasi.'))}>Kirim contoh</button>}
+          </div>
+          <p className="hint">Jam pastinya diatur browser (biasanya pagi atau saat HP tersambung internet), jadi bisa tidak tepat jam 05.00. Butuh Chrome di Android dan Rusukaina terpasang di layar utama.</p>
+        </>
+      ) : (
+        <p className="small muted">{support === 'no-notification' ? 'Browser ini tidak mendukung notifikasi.' : 'Browser ini belum mendukung pengingat di latar belakang. Coba buka Rusukaina di Chrome Android dan pasang ke layar utama.'}</p>
+      )}
+      {msg && <p role="status" className="small">{msg}</p>}
     </Card>
   )
 }

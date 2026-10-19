@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import { LEGACY_PROFILE, planFor, setActivePlan } from '../data/plan'
 import * as repo from './db'
+import { today } from './date'
+import { syncNotifSchedule } from './notify'
 import * as strava from './strava'
 import type { DailyLog, GymLog, Profile, RunLog, SessionMark, Shoe } from './types'
 
@@ -40,7 +42,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const [profile, activities, daily, gym, marks, shoes, lastExportAt, stravaAuth] = await Promise.all([
       repo.getProfile(), repo.listRuns(), repo.listDaily(), repo.listGym(), repo.listMarks(), repo.listShoes(), repo.getLastExportAt(), strava.getStravaAuth(),
     ])
-    setActivePlan(planFor(profile ?? LEGACY_PROFILE))
+    const active = planFor(profile ?? LEGACY_PROFILE)
+    setActivePlan(active)
+    syncNotifSchedule(active.schedule, today()).catch(() => {})
     setState({ ready: true, needsOnboarding: !profile, profile: profile ?? LEGACY_PROFILE,
       runs: activities.filter((r) => r.type !== 'walk'), walks: activities.filter((r) => r.type === 'walk'), daily, gym, marks, shoes, lastExportAt, strava: stravaAuth })
   }, [])
