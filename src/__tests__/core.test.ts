@@ -96,7 +96,7 @@ describe('jadwal', () => {
     expect(dayName('2026-12-05')).toBe('Sabtu')
   })
   it('pola mingguan: Sen Gym A, Rab lari, Kam Gym B, Sab long run', () => {
-    expect(sessionOn('2026-10-19')?.kind).toBe('gymA')
+    expect(sessionOn('2026-11-02')?.kind).toBe('gymA')
     expect(sessionOn('2026-10-14')?.kind).toBe('easy')
     expect(sessionOn('2026-10-15')?.kind).toBe('gymB')
     expect(sessionOn('2026-10-17')?.title).toContain("45'")
@@ -198,11 +198,21 @@ describe('revisi jadwal 8 Okt dan aturan lari', () => {
   })
 
   it('peringatan lari berturut-turut, lebih dari 3, dan di hari gym/libur', () => {
-    const runs = ['2026-10-19', '2026-10-21', '2026-10-24'].map(run) // minggu 4
-    expect(runRuleWarnings('2026-10-22', runs).join(' ')).toMatch(/berturut-turut/)
-    expect(runRuleWarnings('2026-10-22', runs).join(' ')).toMatch(/Maks 3/)
-    expect(runRuleWarnings('2026-10-22', runs).join(' ')).toMatch(/bukan lari/)
-    expect(runRuleWarnings('2026-10-24', runs)).toEqual([])
+    const runs = ['2026-11-02', '2026-11-04', '2026-11-07'].map(run) // minggu 6
+    expect(runRuleWarnings('2026-11-05', runs).join(' ')).toMatch(/berturut-turut/)
+    expect(runRuleWarnings('2026-11-05', runs).join(' ')).toMatch(/Maks 3/)
+    expect(runRuleWarnings('2026-11-05', runs).join(' ')).toMatch(/bukan lari/)
+    expect(runRuleWarnings('2026-11-07', runs)).toEqual([])
+  })
+
+  it('revisi 19 Okt: minggu 4 tanpa lari, minggu 5 tahap 1 dua kali tanpa hari berurutan', () => {
+    const w4 = SCHEDULE.filter((x) => x.date >= '2026-10-19' && x.date <= '2026-10-25')
+    expect(w4.filter((x) => x.kind === 'easy' || x.kind === 'long')).toEqual([])
+    expect(w4.filter((x) => x.kind === 'walk').length).toBe(4)
+    expect(w4.filter((x) => /penguatan kaki/.test(x.title)).length).toBe(3)
+    const w5runs = SCHEDULE.filter((x) => x.date >= '2026-10-26' && x.date <= '2026-11-01' && x.kind === 'easy')
+    expect(w5runs.map((x) => x.date)).toEqual(['2026-10-27', '2026-10-31'])
+    expect(w5runs.every((x) => x.title.startsWith('Tahap 1'))).toBe(true)
   })
 
   it('Minggu 11 Okt boleh jadi lari ke-4', () => {
