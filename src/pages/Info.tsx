@@ -204,6 +204,7 @@ function DataTools() {
   const { runs, walks, daily, gym, profile, refresh } = useData()
   const [msg, setMsg] = useState('')
   const [confirmWipe, setConfirmWipe] = useState(false)
+  const [pasted, setPasted] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
   const summary = coachSummary({ runs, walks, daily, gym, until: today(), days: 7, medTimes: profile.medSchedule?.map((x) => x.time) })
 
@@ -213,13 +214,15 @@ function DataTools() {
     setMsg('File ekspor diunduh.')
   }
 
-  async function doImport(file: File) {
+  async function doImport(text: string) {
     try {
-      const res = await importAll(JSON.parse(await file.text()))
+      const res = await importAll(JSON.parse(text))
       await refresh()
       setMsg(`Impor selesai: ${res.runs} lari, ${res.daily} catatan harian, ${res.gym} gym, ${res.marks} tanda jadwal.`)
+      return true
     } catch (e) {
-      setMsg(`Gagal impor: ${(e as Error).message}`)
+      setMsg(`Gagal impor: ${e instanceof SyntaxError ? "teks bukan JSON yang utuh, pastikan tersalin semua" : (e as Error).message}`)
+      return false
     }
   }
 
@@ -246,9 +249,15 @@ function DataTools() {
         {'share' in navigator && <button className="btn" onClick={share}>Bagikan…</button>}
         <button className="btn" onClick={doExport}>Ekspor JSON</button>
         <button className="btn" onClick={() => fileRef.current?.click()}>Impor JSON</button>
-        <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={(e) => e.target.files?.[0] && doImport(e.target.files[0])} />
+        <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={async (e) => { const f = e.target.files?.[0]; if (f) await doImport(await f.text()) }} />
       </div>
       {msg && <p role="status" className="small">{msg}</p>}
+      <details>
+        <summary className="small">Tempel teks JSON</summary>
+        <p className="hint">Kalau file tidak bisa diunduh, salin isi JSON dari chat lalu tempel di sini.</p>
+        <textarea aria-label="Teks JSON untuk impor" rows={5} value={pasted} onChange={(e) => setPasted(e.target.value)} />
+        <button className="btn small" disabled={!pasted.trim()} onClick={async () => { if (await doImport(pasted)) setPasted('') }}>Impor teks</button>
+      </details>
       <details>
         <summary className="small">Pratinjau ringkasan</summary>
         <pre className="summary">{summary}</pre>
