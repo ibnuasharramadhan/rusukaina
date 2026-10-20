@@ -283,6 +283,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .st.done { background: var(--good); border-color: var(--good); color: #fff; }
 .st.swapped { border-color: var(--walk); color: var(--walk); }
 .days li.missed .st { border-style: dashed; }
+/* Animasi rise membuat tiap baris jadi stacking context; baris dengan menu terbuka harus di atas baris berikutnya. */
+.days li.menu-open { z-index: 6; }
 .menu { position: absolute; right: 12px; top: 46px; z-index: 5; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2); min-width: 210px; overflow: hidden; animation: pop 0.16s ease both; transform-origin: top right; }
 .menu button, .menu a { text-align: left; padding: 11px 14px; background: none; border: 0; border-top: 1px solid var(--line); cursor: pointer; color: var(--ink); text-decoration: none; font-size: 0.9rem; }
 .menu > :first-child { border-top: 0; }

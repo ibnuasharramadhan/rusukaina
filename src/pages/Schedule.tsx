@@ -63,7 +63,7 @@ export function Schedule() {
                     const status = statusOf(s, markMap, runs, gym, walks)
                     const missed = !status && s.date < t && s.kind !== 'rest'
                     return (
-                      <li key={s.date} className={`${s.date === t ? 'is-today' : ''} ${status ?? ''} ${missed ? 'missed' : ''} k-${s.kind}`}>
+                      <li key={s.date} className={`${s.date === t ? 'is-today' : ''} ${menu === s.date ? 'menu-open' : ''} ${status ?? ''} ${missed ? 'missed' : ''} k-${s.kind}`}>
                         <span className="d">{formatDate(s.date, true)}</span>
                         <KindIcon kind={s.kind} size={16} />
                         <span className="grow">
