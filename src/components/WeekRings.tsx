@@ -48,7 +48,7 @@ export function WeekRings({ t, runs, walks, gym, marks }: { t: ISODate; runs: Ru
             <div key={r.key} className={`wr-row ${r.cls}`}>
               <i />
               <span className="wr-l">{r.label}</span>
-              <span className="num wr-v"><CountUp value={r.value} /><small>/{r.goal}</small></span>
+              <span className="num wr-v"><CountUp value={r.value} />{r.goal ? <small>/{r.goal}</small> : <small className="wr-extra"> di luar rencana</small>}</span>
             </div>
           ))}
         </div>
