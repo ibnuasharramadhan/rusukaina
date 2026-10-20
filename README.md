@@ -102,7 +102,7 @@ flowchart LR
 
 ## Kualitas
 
-- **96 tes** (Vitest + `fake-indexeddb`): aturan keamanan, generator rencana, parser GPX/TCX/FIT (termasuk file FIT sintetis), sinkron Strava, IndexedDB, dan ekspor/impor.
+- **99 tes** (Vitest + `fake-indexeddb`): aturan keamanan, generator rencana, parser GPX/TCX/FIT (termasuk file FIT sintetis), sinkron Strava, IndexedDB, dan ekspor/impor.
 - **CI di setiap PR**: typecheck, tes, dan build. Deploy ke GitHub Pages otomatis dari `master`.
 - **Aksesibilitas**: 0 pelanggaran axe-core di semua layar (terang dan gelap, lebar 360 px). Setiap grafik juga punya tampilan tabel.
 - **TypeScript strict** di seluruh kode.

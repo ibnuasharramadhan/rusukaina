@@ -3,7 +3,7 @@ import { DailyForm } from '../components/DailyForm'
 import { ShareSheet } from '../components/ShareSheet'
 import { Icon } from '../components/icons'
 import { Card, Field, LevelBadge, num, PageHeader, Segmented } from '../components/ui'
-import { GYM, GYM_RULES } from '../data/gym'
+import { extraExercises, GYM, GYM_RULES, gymSummary } from '../data/gym'
 import { sessionOn } from '../data/plan'
 import { importActivityFiles } from '../lib/activityFile'
 import { dayReadiness, defaultShoeId } from '../lib/body'
@@ -238,6 +238,18 @@ function GymSection({ params }: { params: URLSearchParams }) {
   }), [workout, editing, gym, date])
   const [sets, setSets] = useState<GymSet[]>(initialSets)
   useEffect(() => setSets(initialSets), [initialSets])
+  // Latihan di luar program (mis. shoulder press) tetap tersimpan dan bisa diubah.
+  const initialExtras = useMemo(() => extraExercises(editing, workout), [editing, workout])
+  const [extras, setExtras] = useState<GymSet[]>(initialExtras)
+  useEffect(() => setExtras(initialExtras), [initialExtras])
+  const [newEx, setNewEx] = useState('')
+  const updX = (i: number, patch: Partial<GymSet>) => setExtras(extras.map((s, j) => (j === i ? { ...s, ...patch } : s)))
+  function addExtra() {
+    const name = newEx.trim()
+    if (!name || [...sets, ...extras].some((e) => e.exercise.toLowerCase() === name.toLowerCase())) return
+    setExtras([...extras, { exercise: name, setsDone: 0 }])
+    setNewEx('')
+  }
 
   const upd = (i: number, patch: Partial<GymSet>) => setSets(sets.map((s, j) => (j === i ? { ...s, ...patch } : s)))
 
@@ -246,7 +258,7 @@ function GymSection({ params }: { params: URLSearchParams }) {
     const id = editing?.id ?? uid()
     if (!editing) celebrate()
     await saveGym({
-      id, date, workout, exercises: sets, rpe: num(rpe), notes: notes.trim() || undefined,
+      id, date, workout, exercises: [...sets, ...extras], rpe: num(rpe), notes: notes.trim() || undefined,
       createdAt: editing?.createdAt ?? now, updatedAt: now,
     })
     await refresh()
@@ -294,7 +306,29 @@ function GymSection({ params }: { params: URLSearchParams }) {
               </li>
             )
           })}
+          {extras.map((s, i) => (
+            <li key={s.exercise} className={s.setsDone >= 3 ? 'complete' : ''}>
+              <div className="ex-h">
+                <b>{s.exercise}</b> <span className="muted">tambahan</span>
+                <button type="button" className="link small danger" onClick={() => setExtras(extras.filter((_, j) => j !== i))}>Hapus</button>
+              </div>
+              <div className="ex-c">
+                <label className="kg"><input inputMode="decimal" aria-label={`Beban kg ${s.exercise}`} value={s.weightKg ?? ''} onChange={(e) => updX(i, { weightKg: num(e.target.value) })} placeholder="kg" /></label>
+                <div className="sets" role="group" aria-label={`Set selesai ${s.exercise}`}>
+                  {Array.from({ length: Math.max(3, s.setsDone) }, (_, k) => (
+                    <button key={k} className={k < s.setsDone ? 'on' : ''} onClick={() => updX(i, { setsDone: k < s.setsDone ? k : k + 1 })} aria-label={`Set ${k + 1}`}>{k + 1}</button>
+                  ))}
+                </div>
+                <label className="check small"><input type="checkbox" checked={!!s.easy} onChange={(e) => updX(i, { easy: e.target.checked })} /> ringan</label>
+              </div>
+            </li>
+          ))}
         </ol>
+        <div className="row add-ex">
+          <input aria-label="Nama latihan tambahan" value={newEx} onChange={(e) => setNewEx(e.target.value)} placeholder="Latihan lain, mis. Shoulder press"
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addExtra() } }} />
+          <button type="button" className="btn" onClick={addExtra} disabled={!newEx.trim()}>Tambah</button>
+        </div>
         <div className="row2">
           <Field label="RPE sesi (1–10)" hint="Target 6–7"><input inputMode="numeric" value={rpe} onChange={(e) => setRpe(e.target.value)} /></Field>
           <Field label="Catatan"><input value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
@@ -315,7 +349,7 @@ function GymSection({ params }: { params: URLSearchParams }) {
             <li key={g.id}>
               <div className="grow">
                 <b>{formatDate(g.date, true)}</b> · Gym {g.workout}{g.rpe ? ` · RPE ${g.rpe}` : ''}
-                <div className="muted small">{g.exercises.filter((e) => e.setsDone).length}/{g.exercises.length} latihan</div>
+                <div className="muted small">{gymSummary(g)}</div>
               </div>
               <a className="link" href={href('catat', { tab: 'gym', id: g.id })}>Ubah</a>
               <DeleteBtn onConfirm={async () => { await deleteGym(g.id); await refresh() }} />

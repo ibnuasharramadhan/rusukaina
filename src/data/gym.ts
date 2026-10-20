@@ -1,3 +1,5 @@
+import type { GymLog, GymSet } from '../lib/types'
+
 export interface Exercise {
   name: string
   prescription: string
@@ -32,4 +34,18 @@ export const GYM: Record<'A' | 'B', Exercise[]> = {
     { name: 'Calf raise', prescription: '3x15', sets: 3, cue: 'Lurus dan tekuk lutut' },
     { name: 'Side plank', prescription: '2x20–30" per sisi', sets: 2, cue: 'Tetap bernapas' },
   ],
+}
+
+/** Latihan yang dicatat tapi tidak ada di program Gym A/B. */
+export function extraExercises(g: GymLog | undefined, workout: 'A' | 'B'): GymSet[] {
+  if (!g || g.workout !== workout) return []
+  const names = new Set(GYM[workout].map((e) => e.name))
+  return g.exercises.filter((e) => !names.has(e.exercise)).map((e) => ({ ...e }))
+}
+
+/** "2 latihan: Chest press machine 20 kg, Shoulder press 20 kg" */
+export function gymSummary(g: GymLog): string {
+  const done = g.exercises.filter((e) => e.setsDone > 0)
+  if (!done.length) return 'Belum ada set tercatat'
+  return `${done.length} latihan: ${done.map((e) => `${e.exercise}${e.weightKg ? ` ${String(e.weightKg).replace('.', ',')} kg` : ''}`).join(', ')}`
 }
