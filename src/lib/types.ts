@@ -1,4 +1,5 @@
 import type { ISODate } from './date'
+import type { BpReading } from './bp'
 
 export type SessionKind = 'gymA' | 'gymB' | 'easy' | 'long' | 'walk' | 'rest' | 'race'
 
@@ -70,6 +71,9 @@ export interface DailyLog {
   /** Pengukuran malam (opsional). */
   sysPm?: number
   diaPm?: number
+  /** Isian mentah bila diukur lebih dari sekali; sys/dia dan sysPm/diaPm berisi rata-ratanya. */
+  bpAm?: BpReading[]
+  bpPm?: BpReading[]
   sleepHours?: number
   medTaken?: boolean
   /** Jam dosis yang sudah diminum hari ini (cocok dengan Profile.medSchedule[].time). */

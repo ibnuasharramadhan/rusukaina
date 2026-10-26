@@ -520,8 +520,9 @@ details summary { cursor: pointer; font-weight: 600; }
 @media (prefers-reduced-motion: reduce) { .sheet, .sheet-backdrop { animation: none; } }
 
 /* Nyeri */
-.pain, .symptoms { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; }
-.pain .field-l, .symptoms .field-l { padding: 0; }
+.row2.even { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.pain, .symptoms, .bp-set { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; }
+.pain .field-l, .symptoms .field-l, .bp-set .field-l { padding: 0; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .pain-chip { border: 1px solid var(--line); background: var(--surface); color: var(--ink-2); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 0.88rem; cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s; }
 .pain-chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
