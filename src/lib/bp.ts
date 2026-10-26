@@ -17,3 +17,20 @@ export function averageBp(readings: BpReading[]): BpReading | undefined {
   const avg = (k: keyof BpReading) => Math.round(readings.reduce((a, r) => a + r[k], 0) / readings.length)
   return { sys: avg('sys'), dia: avg('dia') }
 }
+
+interface DayBp { sys?: number; dia?: number; sysPm?: number; diaPm?: number }
+
+const am = (d: DayBp) => (d.sys && d.dia ? { sys: d.sys, dia: d.dia } : undefined)
+const pm = (d: DayBp) => (d.sysPm && d.diaPm ? { sys: d.sysPm, dia: d.diaPm } : undefined)
+
+/** Tensi satu hari untuk grafik dan rata-rata: rata-rata pagi dan malam, atau yang ada saja. */
+export function dayBp(d: DayBp): BpReading | undefined {
+  return averageBp([am(d), pm(d)].filter((x): x is BpReading => !!x))
+}
+
+/** Tensi untuk cek kesiapan: pagi kalau ada, kalau belum pakai malam. */
+export function checkBp(d: DayBp | undefined): (BpReading & { evening: boolean }) | undefined {
+  if (!d) return undefined
+  const r = am(d) ?? pm(d)
+  return r && { ...r, evening: !am(d) }
+}

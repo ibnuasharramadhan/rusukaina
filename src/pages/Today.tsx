@@ -16,6 +16,7 @@ import { backupDue, raceResult, runRuleWarnings, statusOf } from '../lib/stats'
 import { dayReadiness, shoeKm, shoeState } from '../lib/body'
 import { useData } from '../lib/store'
 import type { DailyLog, PlannedSession, Profile, RunLog } from '../lib/types'
+import { checkBp } from '../lib/bp'
 
 const km = (n: number) => String(n).replace('.', ',')
 
@@ -240,11 +241,12 @@ function ReadinessRing({ levels, overall }: { levels: Level[]; overall: Level })
 }
 
 function ReadinessCard({ d, r, baseline, trackBp, onEdit }: { d: DailyLog; r: Readiness; baseline: number; trackBp: boolean; onEdit: () => void }) {
-  const bp = bpLevel(d.sys, d.dia)
+  const bpv = checkBp(d)
+  const bp = bpLevel(bpv?.sys, bpv?.dia)
   const hr = restingHrVerdict(d.restingHr, baseline).level
   const sl = sleepVerdict(d.sleepHours).level
   const metrics: { label: string; icon: 'drop' | 'heart' | 'bed'; value: string; level: Level }[] = [
-    ...(trackBp ? [{ label: 'Tensi', icon: 'drop' as const, value: d.sys && d.dia ? `${d.sys}/${d.dia}` : '–', level: bp }] : []),
+    ...(trackBp ? [{ label: bpv?.evening ? 'Tensi malam' : 'Tensi', icon: 'drop' as const, value: bpv ? `${bpv.sys}/${bpv.dia}` : '–', level: bp }] : []),
     { label: 'HR istirahat', icon: 'heart', value: d.restingHr ? String(d.restingHr) : '–', level: hr },
     { label: 'Tidur', icon: 'bed', value: d.sleepHours != null ? `${km(d.sleepHours)} j` : '–', level: sl },
   ]
@@ -255,7 +257,7 @@ function ReadinessCard({ d, r, baseline, trackBp, onEdit }: { d: DailyLog; r: Re
         <div className="grow">
           <p className="eyebrow">Kesiapan hari ini</p>
           <h2 className="ready-title">{r.headline}</h2>
-          <button className="link small" onClick={onEdit}>Ubah data pagi</button>
+          <button className="link small" onClick={onEdit}>Ubah data hari ini</button>
         </div>
       </div>
       <div className="metrics">

@@ -58,6 +58,6 @@ export function symptomVerdict(d?: Pick<DailyLog, 'dizzy' | 'dryCough'>): Verdic
 /** Entri harian berisi data cek pagi (bukan cuma tanda minum obat). */
 export function hasCheckin(d?: DailyLog): boolean {
   if (!d) return false
-  return d.restingHr != null || d.sleepHours != null || d.sys != null || !!d.painAreas?.length || !!d.dizzy || !!d.dryCough
+  return d.restingHr != null || d.sleepHours != null || d.sys != null || d.sysPm != null || !!d.painAreas?.length || !!d.dizzy || !!d.dryCough
     || d.symptoms != null || d.notes != null || d.medDoses == null
 }
