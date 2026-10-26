@@ -23,7 +23,7 @@ const WEEKS: WeekSpec[] = [
   { no: 2, start: '2026-10-05', end: '2026-10-11', longRun: "Easy 40'", midweek: "25–30'", longMin: 40, midMin: 25 },
   { no: 3, start: '2026-10-12', end: '2026-10-18', longRun: "Easy 45' / ±5,5 km", midweek: "30'", longMin: 45, longKm: 5.5, midMin: 30 },
   { no: 4, start: '2026-10-19', end: '2026-10-25', longRun: 'Tidak lari (pemulihan kaki)', midweek: "Jalan santai 20–30' 3–4x", note: 'Pemulihan kaki: tanpa lari. Jalan santai, penguatan kaki 3x, gym tubuh atas. Berhenti kalau jalan memicu nyeri.', deload: true },
-  { no: 5, start: '2026-10-26', end: '2026-11-01', longRun: "Tahap 1: (lari 1' / jalan 2') x6", midweek: 'Jalan santai + penguatan kaki', note: "Kembali lari tahap 1, hanya kalau tes jalan cepat 30' hari Minggu bebas nyeri. Nyeri muncul lagi: kembali jalan saja dan istirahat 2 hari." },
+  { no: 5, start: '2026-10-26', end: '2026-11-01', longRun: "Tahap 2: (lari 2' / jalan 1') x7", midweek: 'Jalan santai + penguatan kaki', note: "Lari 22 Okt memicu nyeri lagi, lalu istirahat 23–25 Okt. Kembali lari-jalan tahap 2 (±20'), hanya kalau pagi bebas nyeri. Nyeri muncul lagi: turun 1 tahap dan istirahat 2 hari." },
   { no: 6, start: '2026-11-02', end: '2026-11-08', longRun: "Easy 55'", midweek: "30'", note: 'Tes 3 km di HR 140–145: catat pace, bandingkan dengan 1 Okt', longMin: 55, midMin: 30 },
   { no: 7, start: '2026-11-09', end: '2026-11-15', longRun: "Easy 60' / ±7 km", midweek: "30' + 4x strides 15\"", note: 'Strides = akselerasi santai, bukan sprint', longMin: 60, longKm: 7, midMin: 30, strides: 4 },
   { no: 8, start: '2026-11-16', end: '2026-11-22', longRun: "Easy 50'", midweek: "30' + 6x strides", note: 'Deload', deload: true, longMin: 50, midMin: 30, strides: 6 },
@@ -69,8 +69,8 @@ function sessionFor(date: ISODate, w: WeekSpec): PlannedSession {
 }
 
 const LEG = 'Penguatan kaki: calf raise 2x12, angkat ujung kaki (tibialis raise) 2x15, glute bridge 2x12.'
-const STAGE1 = "Tahap 1: jalan 5' + (lari 1' / jalan 2') x6 + jalan 5'"
-const STAGE1_DETAIL = 'Treadmill, HR ≤145. Hanya kalau tes jalan cepat 25 Okt bebas nyeri; kalau belum, ganti jalan santai. Nyeri muncul lagi: berhenti, istirahat 2 hari.'
+const STAGE2 = "Tahap 2: (lari 2' / jalan 1') x7"
+const STAGE2_DETAIL = 'Treadmill, ±20 menit, HR ≤145. Hanya kalau pagi ini kaki bebas nyeri dan tidak pegal berat. Nyeri saat lari: berhenti, turun ke tahap 1, istirahat 2 hari.'
 
 // Perubahan per tanggal dari thread coaching (revisi 8 Okt), menimpa template mingguan.
 const OVERRIDES: Record<ISODate, Omit<PlannedSession, 'date'>> = {
@@ -92,12 +92,12 @@ const OVERRIDES: Record<ISODate, Omit<PlannedSession, 'date'>> = {
     kind: 'walk', title: "Tes jalan cepat 30'", minutes: 30,
     detail: 'Syarat mulai lari lagi: jalan cepat 30\' tanpa nyeri, 10x lompat kecil satu kaki tanpa nyeri, tulang kering tidak nyeri ditekan. Kalau masih nyeri, minggu depan tetap jalan saja.',
   },
-  '2026-10-26': { kind: 'gymA', title: 'Gym A (full body)', minutes: 40, detail: 'Gerakan kaki hanya kalau tidak nyeri.' },
-  '2026-10-27': { kind: 'easy', title: STAGE1, minutes: 28, detail: STAGE1_DETAIL },
-  '2026-10-28': { kind: 'walk', title: "Jalan santai 20–30' + penguatan kaki", minutes: 25, detail: LEG },
-  '2026-10-29': { kind: 'gymB', title: 'Gym B (full body)', minutes: 40, detail: 'Gerakan kaki hanya kalau tidak nyeri.' },
+  '2026-10-26': { kind: 'gymA', title: "Leg day ringan + jalan treadmill 20–30'", minutes: 50, detail: 'Tidak lari. Gerakan kaki beban ringan, berhenti kalau nyeri. Setelah gym, jalan santai di treadmill.' },
+  '2026-10-27': { kind: 'easy', title: STAGE2, minutes: 20, detail: `${STAGE2_DETAIL} Masih pegal dari leg day: geser ke Rabu.` },
+  '2026-10-28': { kind: 'walk', title: "Jalan santai 20–30' + penguatan kaki", minutes: 25, detail: `Kalau lari-jalan kemarin digeser, lakukan hari ini dan lewati jalan ini. ${LEG}` },
+  '2026-10-29': { kind: 'gymB', title: 'Gym B (full body)', minutes: 40, detail: 'Gerakan kaki hanya kalau tidak nyeri. Tambahkan gerakan tarik (lat pulldown/row) dan core.' },
   '2026-10-30': { kind: 'rest', title: 'Libur' },
-  '2026-10-31': { kind: 'easy', title: STAGE1, minutes: 28, detail: `${STAGE1_DETAIL} Dua sesi tanpa nyeri (saat lari dan besok paginya) = boleh naik ke tahap 2.` },
+  '2026-10-31': { kind: 'easy', title: STAGE2, minutes: 20, detail: `${STAGE2_DETAIL} Dua sesi tanpa nyeri (saat lari dan besok paginya) = boleh naik ke tahap 3: (lari 4' / jalan 1') x5.` },
   '2026-11-01': { kind: 'walk', title: "Jalan santai 20–30'", minutes: 25, detail: 'Opsional. Cek kaki pagi ini setelah lari kemarin.' },
 }
 
