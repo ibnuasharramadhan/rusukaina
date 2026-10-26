@@ -5,6 +5,7 @@ import { addDays, today } from '../lib/date'
 import { formatPace, metersPerBeat, paceSecPerKm } from '../lib/pace'
 import { adherence, bpAverage, weekStats } from '../lib/stats'
 import { useData } from '../lib/store'
+import { dayBp } from '../lib/bp'
 
 const C = { s1: 'var(--series-1)', s2: 'var(--series-2)' }
 
@@ -17,6 +18,7 @@ export function Progress() {
   const totalKm = runs.reduce((a, r) => a + r.distanceKm, 0)
   const { planned, done } = adherence(runs, gym, marks, t, walks)
   const avg7 = bpAverage(daily, 7, t)
+  const bpDays = daily.flatMap((d) => { const b = dayBp(d); return b ? [{ date: d.date, ...b }] : [] })
   const hrRows = daily.filter((d) => d.restingHr && d.date >= addDays(t, -6) && d.date <= t)
   const hr7 = hrRows.length ? Math.round(hrRows.reduce((a, d) => a + d.restingHr!, 0) / hrRows.length) : null
   const withHr = easy.filter((r) => r.avgHr)
@@ -29,16 +31,16 @@ export function Progress() {
         <Stat label="Sesi gym" value={gym.length} />
         <Stat label="Konsistensi" value={planned ? `${Math.round((done / planned) * 100)}%` : '–'} sub={`${done}/${planned} sesi`} />
         {profile.trackBp
-          ? <Stat label="Tensi 7 hari" value={avg7 ? `${avg7.sys}/${avg7.dia}` : '–'} sub={avg7 ? `${avg7.n} pengukuran` : 'belum ada'} />
+          ? <Stat label="Tensi 7 hari" value={avg7 ? `${avg7.sys}/${avg7.dia}` : '–'} sub={avg7 ? `${avg7.n} hari` : 'belum ada'} />
           : <Stat label="HR istirahat 7 hari" value={hr7 ?? '–'} sub={hr7 ? `batas ${profile.restingHrBaseline + 7}` : 'belum ada'} />}
       </div>
 
-      {profile.trackBp && <Card title="Tekanan darah (pagi)">
-        <p className="muted small">Target dokter umumnya &lt;130–140. Garis 140 = batas kuning, 160 = jangan latihan.</p>
+      {profile.trackBp && <Card title="Tekanan darah">
+        <p className="muted small">Per hari: rata-rata pagi dan malam (atau yang dicatat saja). Target dokter umumnya &lt;130–140. Garis 140 = batas kuning, 160 = jangan latihan.</p>
         <LineChart
           series={[
-            { name: 'Sistolik', color: C.s1, points: daily.filter((d) => d.sys).map((d) => ({ x: d.date, y: d.sys! })) },
-            { name: 'Diastolik', color: C.s2, points: daily.filter((d) => d.dia).map((d) => ({ x: d.date, y: d.dia! })) },
+            { name: 'Sistolik', color: C.s1, points: bpDays.map((d) => ({ x: d.date, y: d.sys })) },
+            { name: 'Diastolik', color: C.s2, points: bpDays.map((d) => ({ x: d.date, y: d.dia })) },
           ]}
           refs={[{ y: 140, label: '140', tone: 'warn' }, { y: 160, label: '160', tone: 'bad' }, { y: 90, label: '90', tone: 'warn' }]}
           empty="Catat tensi di tab Catat › Tensi & HR."

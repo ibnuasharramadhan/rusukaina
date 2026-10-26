@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { PAIN_AREAS } from '../lib/body'
 import { averageBp, parseReading, type BpReading } from '../lib/bp'
+import { formatDate } from '../lib/date'
 import { saveDaily } from '../lib/db'
 import { useData } from '../lib/store'
 import type { DailyLog } from '../lib/types'
@@ -31,10 +32,13 @@ export function DailyForm({ date, compact, onSaved }: { date: string; compact?: 
   })
   const scheduled = !!profile.medSchedule?.length
   const [err, setErr] = useState('')
+  const [saved, setSaved] = useState(false)
   // Di kartu Hari ini (compact), pilihan nyeri disembunyikan sampai dibutuhkan.
   const [showPain, setShowPain] = useState(!compact || !!existing?.painAreas?.length)
-  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSaved(false)
     setF({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value })
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -62,6 +66,7 @@ export function DailyForm({ date, compact, onSaved }: { date: string; compact?: 
     await saveDaily(entry)
     await refresh()
     setErr('')
+    setSaved(true)
     onSaved?.()
   }
 
@@ -85,7 +90,7 @@ export function DailyForm({ date, compact, onSaved }: { date: string; compact?: 
       {profile.medName && !scheduled && <label className="check"><input type="checkbox" checked={f.medTaken} onChange={set('medTaken')} /> {profile.medName} sudah diminum</label>}
       {profile.medName && (
         <fieldset className="symptoms">
-          <legend className="field-l">Keluhan pagi ini</legend>
+          <legend className="field-l">Keluhan hari ini</legend>
           <label className="check"><input type="checkbox" checked={f.dizzy} onChange={set('dizzy')} /> Pusing / kliyengan</label>
           <label className="check"><input type="checkbox" checked={f.dryCough} onChange={set('dryCough')} /> Batuk kering</label>
         </fieldset>
@@ -118,9 +123,10 @@ export function DailyForm({ date, compact, onSaved }: { date: string; compact?: 
         </>
       )}
       <p className="hint">{bp
-        ? 'Ukur pagi sebelum obat & kopi, duduk tenang 5 menit, 2x dengan jeda 1 menit. Rata-ratanya dihitung otomatis.'
+        ? 'Ukur pagi (sebelum obat & kopi) dan malam sebelum tidur: duduk tenang 5 menit, 2x dengan jeda 1 menit. Rata-ratanya dihitung otomatis. Boleh isi pagi saja atau malam saja.'
         : 'HR istirahat: lihat di jam/band saat baru bangun.'}</p>
       {err && <p className="error" role="alert">{err}</p>}
+      <p role="status" className="small saved-msg">{saved && !err ? `Tersimpan untuk ${formatDate(date, true)}.` : ''}</p>
       <button className="btn primary" type="submit">Simpan</button>
     </form>
   )

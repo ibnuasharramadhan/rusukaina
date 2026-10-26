@@ -408,7 +408,7 @@ function DailySection({ params }: { params: URLSearchParams }) {
             return (
               <li key={d.date}>
                 <div className="grow">
-                  <b>{formatDate(d.date, true)}</b>{profile.trackBp && ` · ${d.sys && d.dia ? `${d.sys}/${d.dia}` : '–'}${d.sysPm && d.diaPm ? ` · malam ${d.sysPm}/${d.diaPm}` : ''}`} · HR {d.restingHr ?? '–'}
+                  <b>{formatDate(d.date, true)}</b>{profile.trackBp && ` · ${[d.sys && d.dia ? `${d.sys}/${d.dia}` : null, d.sysPm && d.diaPm ? `malam ${d.sysPm}/${d.diaPm}` : null].filter(Boolean).join(' · ') || '–'}`} · HR {d.restingHr ?? '–'}
                   {d.sleepHours != null && ` · tidur ${d.sleepHours} j`}
                   {d.dizzy && ' · pusing'}{d.dryCough && ' · batuk kering'}
                   {!!d.painAreas?.length && ` · nyeri ${d.painAreas.join(', ').toLowerCase()}${d.painScore ? ` ${d.painScore}/10` : ''}`}

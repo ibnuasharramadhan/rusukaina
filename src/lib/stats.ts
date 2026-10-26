@@ -1,4 +1,5 @@
 import { MAX_RUNS_PER_WEEK, plan, sessionOn, weekOf } from '../data/plan'
+import { averageBp, dayBp } from './bp'
 import { addDays, formatDate, type ISODate } from './date'
 import { formatDuration, formatPace, paceSecPerKm } from './pace'
 import { bpLevel } from './safety'
@@ -77,14 +78,12 @@ export function raceResult(runs: RunLog[], raceDate: ISODate): RunLog | undefine
   return runs.find((r) => r.type === 'race' && r.date === raceDate)
 }
 
-/** Rata-rata tensi dari N hari terakhir yang tercatat (pagi). */
+/** Rata-rata tensi dari N hari terakhir yang tercatat (pagi dan/atau malam). */
 export function bpAverage(daily: DailyLog[], days: number, until: ISODate): { sys: number; dia: number; n: number } | null {
   const from = addDays(until, -(days - 1))
-  const rows = daily.filter((d) => d.date >= from && d.date <= until && d.sys && d.dia)
-  if (!rows.length) return null
-  const sys = Math.round(rows.reduce((a, d) => a + d.sys!, 0) / rows.length)
-  const dia = Math.round(rows.reduce((a, d) => a + d.dia!, 0) / rows.length)
-  return { sys, dia, n: rows.length }
+  const rows = daily.filter((d) => d.date >= from && d.date <= until).map(dayBp).filter((x) => !!x)
+  const avg = averageBp(rows)
+  return avg ? { ...avg, n: rows.length } : null
 }
 
 function medLine(d: DailyLog, times: string[], until: ISODate): string | null {
@@ -129,7 +128,7 @@ export function coachSummary(input: { runs: RunLog[]; walks?: RunLog[]; daily: D
   for (const d of daily) {
     const parts = [
       d.sys && d.dia ? `${d.sys}/${d.dia}${bpLevel(d.sys, d.dia) !== 'green' ? ' (!)' : ''}` : null,
-      d.sysPm && d.diaPm ? `malam ${d.sysPm}/${d.diaPm}` : null,
+      d.sysPm && d.diaPm ? `malam ${d.sysPm}/${d.diaPm}${bpLevel(d.sysPm, d.diaPm) !== 'green' ? ' (!)' : ''}` : null,
       d.restingHr ? `HR ${d.restingHr}` : null,
       d.sleepHours != null ? `tidur ${d.sleepHours} j` : null,
       medLine(d, input.medTimes ?? [], input.until),
