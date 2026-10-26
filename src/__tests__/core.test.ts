@@ -211,7 +211,7 @@ describe('revisi jadwal 8 Okt dan aturan lari', () => {
     expect(w4.filter((x) => x.kind === 'walk').length).toBe(4)
     expect(w4.filter((x) => /penguatan kaki/.test(x.title)).length).toBe(3)
     const w5runs = SCHEDULE.filter((x) => x.date >= '2026-10-26' && x.date <= '2026-11-01' && x.kind === 'easy')
-    expect(w5runs.map((x) => x.date)).toEqual(['2026-10-27', '2026-10-31'])
+    expect(w5runs.map((x) => x.date)).toEqual(['2026-10-28', '2026-10-31'])
     expect(w5runs.every((x) => x.title.startsWith('Tahap 2'))).toBe(true)
   })
 
