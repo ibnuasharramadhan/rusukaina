@@ -162,3 +162,31 @@ describe('Gemini: coba ulang dan model cadangan', () => {
     expect((result as { items: unknown[] }).items[0]).toMatchObject({ name: 'Jagung rebus' })
   })
 })
+
+describe('Gemini: koneksi putus', () => {
+  const ok = { candidates: [{ content: { parts: [{ text: '{"items":[{"name":"Telur puyuh","portion":"7 butir","kcal":98,"proteinG":9,"carbsG":0,"fatG":7}]}' }] } }] }
+  const s = { key: 'k', model: 'gemini-flash-latest' }
+  async function run(replies: (Response | 'fail')[]) {
+    const calls: string[] = []
+    const orig = globalThis.fetch
+    globalThis.fetch = (async (url: string) => {
+      calls.push(url.split('/models/')[1].split(':')[0])
+      const r = replies.shift()!
+      if (r === 'fail') throw new TypeError('Failed to fetch')
+      return r
+    }) as typeof fetch
+    try { return { result: await analyzeFood(s, { text: 'telur puyuh 7' }, { retryDelayMs: 0 }).catch((e: Error) => e), calls } } finally { globalThis.fetch = orig }
+  }
+
+  it('putus sekali lalu berhasil', async () => {
+    const { result, calls } = await run(['fail', new Response(JSON.stringify(ok))])
+    expect(calls).toEqual(['gemini-flash-latest', 'gemini-flash-latest'])
+    expect((result as { items: unknown[] }).items).toHaveLength(1)
+  })
+
+  it('putus terus: berhenti setelah 3 kali dengan pesan jelas', async () => {
+    const { result, calls } = await run(['fail', 'fail', 'fail', 'fail'])
+    expect(calls).toHaveLength(3)
+    expect((result as Error).message).toMatch(/terputus/)
+  })
+})

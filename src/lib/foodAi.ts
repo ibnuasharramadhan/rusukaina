@@ -88,6 +88,9 @@ type GeminiBody = {
   candidates?: { content?: { parts?: { text?: string }[] }; finishReason?: string }[]
 }
 
+/** Batas tunggu satu permintaan; foto di sinyal lemah bisa lama. */
+const TIMEOUT_MS = 60_000
+
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 export async function analyzeFood(
@@ -104,19 +107,26 @@ export async function analyzeFood(
   })
   const models = [...new Set([s.model || DEFAULT_MODEL, ...FALLBACK_MODELS])]
   const delay = opts.retryDelayMs ?? 1500
-  let busy = 0, quota = 0
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) throw new Error('HP sedang offline. Sambungkan internet lalu coba lagi.')
+  let busy = 0, quota = 0, net = 0
 
   for (const [i, model] of models.entries()) {
-    if (i > 0) opts.onStatus?.('Server sibuk, mencoba model lain…')
-    // Server penuh biasanya sebentar: ulangi sekali di model yang sama sebelum pindah.
+    if (net >= 3) break
+    if (i > 0) opts.onStatus?.('Mencoba model lain…')
+    // Server penuh atau sinyal putus biasanya sebentar: ulangi sekali di model yang sama sebelum pindah.
     for (let attempt = 0; attempt < 2; attempt++) {
       let res: Response
       try {
         res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
           method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': s.key }, body: request,
+          signal: AbortSignal.timeout?.(TIMEOUT_MS),
         })
       } catch {
-        throw new Error('Tidak bisa terhubung ke Gemini. Cek internet.')
+        // Sinyal putus, permintaan terlalu lama, atau jawaban error tanpa header CORS.
+        net++
+        if (net >= 3) break
+        if (attempt === 0) { opts.onStatus?.('Koneksi terputus, mencoba lagi…'); await wait(delay); continue }
+        break
       }
       const body = await res.json().catch(() => ({})) as GeminiBody
       if (res.ok) {
@@ -141,6 +151,7 @@ export async function analyzeFood(
       throw new Error(`Gemini menolak permintaan (${res.status}): ${body.error?.message ?? 'tidak diketahui'}`)
     }
   }
+  if (net) throw new Error('Koneksi ke Gemini terputus berkali-kali. Cek sinyal, lalu ketuk Hitung dengan AI lagi; tulisanmu tidak hilang.')
   if (busy) throw new Error('Server Gemini sedang penuh. Coba lagi beberapa menit lagi, atau pakai daftar makanan di bawah.')
   if (quota) throw new Error('Kuota gratis Gemini hari ini habis. Coba lagi besok, atau pakai daftar makanan di bawah.')
   throw new Error('Model Gemini tidak ditemukan. Kosongkan kolom model di Info › Analisa foto makanan.')
