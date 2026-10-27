@@ -228,6 +228,7 @@ function AiPanel({ onSave }: { onSave: (items: AiFood[]) => Promise<void> }) {
   const [text, setText] = useState('')
   const [photo, setPhoto] = useState<{ url: string; file: File } | null>(null)
   const [busy, setBusy] = useState(false)
+  const [busyMsg, setBusyMsg] = useState('')
   const [err, setErr] = useState('')
   const [drafts, setDrafts] = useState<Draft[] | null>(null)
   const [note, setNote] = useState('')
@@ -246,10 +247,10 @@ function AiPanel({ onSave }: { onSave: (items: AiFood[]) => Promise<void> }) {
   }
 
   async function run() {
-    setBusy(true); setErr(''); setNote('')
+    setBusy(true); setBusyMsg(''); setErr(''); setNote('')
     try {
       const image = photo ? await compressImage(photo.file) : undefined
-      const res = await analyzeFood(settings!, { image, text })
+      const res = await analyzeFood(settings!, { image, text }, { onStatus: setBusyMsg })
       if (!res.items.length) throw new Error('AI tidak menemukan makanan. Coba foto lebih dekat atau tulis makanannya.')
       setDrafts(res.items.map(toDraft))
       setNote(res.note ?? '')
@@ -295,7 +296,7 @@ function AiPanel({ onSave }: { onSave: (items: AiFood[]) => Promise<void> }) {
           </Field>
           <div className="row">
             <button type="button" className="btn" onClick={run} disabled={busy || (!photo && !text.trim())}>
-              <Icon name="spark" size={16} /> {busy ? 'AI sedang menghitung…' : 'Hitung dengan AI'}
+              <Icon name="spark" size={16} /> {busy ? busyMsg || 'AI sedang menghitung…' : 'Hitung dengan AI'}
             </button>
             {(photo || text) && !busy && <button type="button" className="link" onClick={reset}>Batal</button>}
           </div>

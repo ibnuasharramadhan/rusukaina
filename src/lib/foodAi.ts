@@ -80,40 +80,68 @@ export function parseAiResult(text: string): AiResult {
   return { items, note: typeof raw.note === 'string' && raw.note.trim() ? raw.note.trim() : undefined }
 }
 
-export async function analyzeFood(s: AiSettings, input: { image?: { data: string; mime: string }; text?: string }): Promise<AiResult> {
+/** Dicoba berurutan bila model utama penuh (503), kuotanya habis (429), atau sudah tidak ada (404). */
+export const FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash-lite']
+
+type GeminiBody = {
+  error?: { message?: string; status?: string }
+  candidates?: { content?: { parts?: { text?: string }[] }; finishReason?: string }[]
+}
+
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+export async function analyzeFood(
+  s: AiSettings,
+  input: { image?: { data: string; mime: string }; text?: string },
+  opts: { onStatus?: (msg: string) => void; retryDelayMs?: number } = {},
+): Promise<AiResult> {
   if (!input.image && !input.text?.trim()) throw new Error('Pilih foto atau tulis makanannya dulu.')
   const parts: unknown[] = [{ text: PROMPT + (input.text?.trim() ? `\n\nDeskripsi dari pengguna: ${input.text.trim()}` : '') }]
   if (input.image) parts.push({ inline_data: { mime_type: input.image.mime, data: input.image.data } })
-  let res: Response
-  try {
-    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(s.model || DEFAULT_MODEL)}:generateContent`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-goog-api-key': s.key },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts }],
-        generationConfig: { responseMimeType: 'application/json', responseSchema: SCHEMA, temperature: 0.2 },
-      }),
-    })
-  } catch {
-    throw new Error('Tidak bisa terhubung ke Gemini. Cek internet.')
+  const request = JSON.stringify({
+    contents: [{ role: 'user', parts }],
+    generationConfig: { responseMimeType: 'application/json', responseSchema: SCHEMA, temperature: 0.2 },
+  })
+  const models = [...new Set([s.model || DEFAULT_MODEL, ...FALLBACK_MODELS])]
+  const delay = opts.retryDelayMs ?? 1500
+  let busy = 0, quota = 0
+
+  for (const [i, model] of models.entries()) {
+    if (i > 0) opts.onStatus?.('Server sibuk, mencoba model lain…')
+    // Server penuh biasanya sebentar: ulangi sekali di model yang sama sebelum pindah.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      let res: Response
+      try {
+        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+          method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': s.key }, body: request,
+        })
+      } catch {
+        throw new Error('Tidak bisa terhubung ke Gemini. Cek internet.')
+      }
+      const body = await res.json().catch(() => ({})) as GeminiBody
+      if (res.ok) {
+        const text = body.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? ''
+        if (!text) throw new Error('Gemini tidak memberi jawaban. Coba foto lain atau tulis makanannya.')
+        try {
+          return parseAiResult(text)
+        } catch {
+          throw new Error('Jawaban Gemini tidak terbaca. Coba lagi.')
+        }
+      }
+      const st = body.error?.status
+      if (res.status === 400 && /API key/i.test(body.error?.message ?? '')) throw new Error('API key Gemini tidak valid. Cek lagi di Info.')
+      if (res.status === 403 || st === 'PERMISSION_DENIED') throw new Error('API key Gemini ditolak. Buat key baru di Google AI Studio.')
+      if (res.status >= 500) {
+        busy++
+        if (attempt === 0) { opts.onStatus?.('Server sibuk, mencoba lagi…'); await wait(delay); continue }
+        break
+      }
+      if (res.status === 429 || st === 'RESOURCE_EXHAUSTED') { quota++; break }
+      if (res.status === 404) break
+      throw new Error(`Gemini menolak permintaan (${res.status}): ${body.error?.message ?? 'tidak diketahui'}`)
+    }
   }
-  const body = await res.json().catch(() => ({})) as {
-    error?: { message?: string; status?: string }
-    candidates?: { content?: { parts?: { text?: string }[] }; finishReason?: string }[]
-  }
-  if (!res.ok) {
-    const st = body.error?.status
-    if (res.status === 400 && /API key/i.test(body.error?.message ?? '')) throw new Error('API key Gemini tidak valid. Cek lagi di Info.')
-    if (res.status === 403 || st === 'PERMISSION_DENIED') throw new Error('API key Gemini ditolak. Buat key baru di Google AI Studio.')
-    if (res.status === 429 || st === 'RESOURCE_EXHAUSTED') throw new Error('Kuota gratis Gemini habis untuk sementara. Coba lagi nanti atau isi manual.')
-    if (res.status === 404) throw new Error(`Model "${s.model}" tidak ditemukan. Kosongkan kolom model di Info untuk memakai bawaan.`)
-    throw new Error(`Gemini error ${res.status}: ${body.error?.message ?? 'tidak diketahui'}`)
-  }
-  const text = body.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? ''
-  if (!text) throw new Error('Gemini tidak memberi jawaban. Coba foto lain atau tulis makanannya.')
-  try {
-    return parseAiResult(text)
-  } catch {
-    throw new Error('Jawaban Gemini tidak terbaca. Coba lagi.')
-  }
+  if (busy) throw new Error('Server Gemini sedang penuh. Coba lagi beberapa menit lagi, atau pakai daftar makanan di bawah.')
+  if (quota) throw new Error('Kuota gratis Gemini hari ini habis. Coba lagi besok, atau pakai daftar makanan di bawah.')
+  throw new Error('Model Gemini tidak ditemukan. Kosongkan kolom model di Info › Analisa foto makanan.')
 }
