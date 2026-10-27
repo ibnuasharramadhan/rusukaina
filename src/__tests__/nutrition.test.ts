@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { activityKcal, bmrMifflin, dailyBalance, favorites, mealForHour, portionText, scaleFood, searchFoods, weightOn } from '../lib/nutrition'
-import { parseAiResult } from '../lib/foodAi'
+import { analyzeFood, parseAiResult } from '../lib/foodAi'
 import { exportAll, importAll, listFoods, listRuns, resetConnection, saveFood, wipeAll } from '../lib/db'
 import type { FoodEntry, Profile, RunLog } from '../lib/types'
 
@@ -124,5 +124,41 @@ describe('makanan di IndexedDB', () => {
   it('file cadangan lama tanpa makanan tetap bisa diimpor', async () => {
     const res = await importAll({ app: 'pwa-latihan', schemaVersion: 1, exportedAt: '', runs: [], daily: [], gym: [], marks: [] })
     expect(res.foods).toBe(0)
+  })
+})
+
+describe('Gemini: coba ulang dan model cadangan', () => {
+  const ok = { candidates: [{ content: { parts: [{ text: '{"items":[{"name":"Jagung rebus","portion":"1 potong","kcal":90,"proteinG":3,"carbsG":19,"fatG":1}]}' }] } }] }
+  const resp = (status: number, body: unknown) => new Response(JSON.stringify(body), { status })
+  async function withFetch(replies: Response[], fn: () => Promise<unknown>) {
+    const calls: string[] = []
+    const orig = globalThis.fetch
+    globalThis.fetch = (async (url: string) => { calls.push(url.split('/models/')[1].split(':')[0]); return replies.shift()! }) as typeof fetch
+    try { return { result: await fn().catch((e: Error) => e), calls } } finally { globalThis.fetch = orig }
+  }
+  const s = { key: 'k', model: 'gemini-flash-latest' }
+
+  it('503 diulang sekali, lalu pindah ke model cadangan', async () => {
+    const { result, calls } = await withFetch([resp(503, { error: { status: 'UNAVAILABLE' } }), resp(503, {}), resp(200, ok)], () => analyzeFood(s, { text: 'jagung' }, { retryDelayMs: 0 }))
+    expect(calls).toEqual(['gemini-flash-latest', 'gemini-flash-latest', 'gemini-2.5-flash'])
+    expect((result as { items: unknown[] }).items).toHaveLength(1)
+  })
+
+  it('semua penuh: pesan jelas dalam bahasa Indonesia', async () => {
+    const { result, calls } = await withFetch(Array.from({ length: 8 }, () => resp(503, {})), () => analyzeFood(s, { text: 'jagung' }, { retryDelayMs: 0 }))
+    expect(calls).toHaveLength(8)
+    expect((result as Error).message).toMatch(/sedang penuh/)
+  })
+
+  it('key salah langsung berhenti tanpa mencoba model lain', async () => {
+    const { result, calls } = await withFetch([resp(400, { error: { message: 'API key not valid' } })], () => analyzeFood(s, { text: 'x' }, { retryDelayMs: 0 }))
+    expect(calls).toHaveLength(1)
+    expect((result as Error).message).toMatch(/tidak valid/)
+  })
+
+  it('429 dan 404 pindah ke model berikutnya', async () => {
+    const { result, calls } = await withFetch([resp(429, { error: { status: 'RESOURCE_EXHAUSTED' } }), resp(404, {}), resp(200, ok)], () => analyzeFood(s, { text: 'x' }, { retryDelayMs: 0 }))
+    expect(calls).toEqual(['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-flash-lite-latest'])
+    expect((result as { items: unknown[] }).items[0]).toMatchObject({ name: 'Jagung rebus' })
   })
 })
