@@ -586,3 +586,39 @@ details summary { cursor: pointer; font-weight: 600; }
 .body-trend { display: grid; gap: 8px; }
 .body-form summary { cursor: pointer; font-weight: 600; }
 .body-form .form { margin-top: 10px; }
+
+/* Makan & kalori */
+.energy { display: grid; gap: 8px; }
+.energy-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; }
+.energy-v .num { font-size: 1.7rem; font-weight: 700; }
+.energy-v small, .energy-left small { color: var(--muted); font-size: 0.82rem; }
+.energy-left { text-align: right; display: grid; }
+.energy-left .num { font-size: 1.15rem; font-weight: 700; }
+.energy-left.over .num { color: var(--critical-text); }
+.energy-bar { height: 10px; border-radius: 5px; background: var(--surface-2); overflow: hidden; }
+.energy-fill { height: 100%; border-radius: 5px; background: var(--accent); transition: width 0.4s var(--ease-out); }
+.energy-fill.over { background: var(--critical-text); }
+.macros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.macro { display: grid; gap: 2px; padding: 8px 10px; border-radius: 10px; background: var(--surface-2); }
+.macro small { color: var(--muted); }
+.meal { margin-top: 12px; }
+.meal-h { display: flex; justify-content: space-between; font-weight: 700; font-size: 0.9rem; margin: 0 0 2px; }
+.ai-tag { margin-left: 6px; font-size: 0.68rem; font-weight: 700; padding: 1px 6px; border-radius: 99px; background: var(--accent-soft); color: var(--accent-text); vertical-align: 2px; }
+.food-block { display: grid; gap: 8px; margin-top: 14px; }
+.food-block > summary { cursor: pointer; }
+.ai-panel { padding: 12px; border-radius: 12px; border: 1px solid var(--line); }
+.ai-row { display: flex; align-items: center; gap: 10px; }
+.ai-row .btn { display: inline-flex; align-items: center; gap: 6px; }
+.ai-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 10px; }
+.ai-panel .row .btn { display: inline-flex; align-items: center; gap: 6px; }
+.ai-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.ai-items li { display: grid; gap: 6px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.ai-items li .link { justify-self: start; }
+.ai-nums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.ai-steps { margin: 4px 0 8px; padding-left: 20px; display: grid; gap: 2px; }
+.food-results { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.food-results li > button { width: 100%; display: flex; align-items: center; gap: 8px; text-align: left; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 10px; padding: 8px 10px; font: inherit; cursor: pointer; min-height: 44px; }
+.food-results li > button.on { border-color: var(--accent); background: var(--accent-soft); }
+.food-qty { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 0 4px; }
+.food-qty .seg { flex: 1 1 180px; }
+.saved-msg { margin: 0; }

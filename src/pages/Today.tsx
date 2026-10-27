@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { DailyForm } from '../components/DailyForm'
+import { EnergySummary } from '../components/FoodLog'
 import { Icon } from '../components/icons'
 import { Card, CountUp, KIND, KindIcon, LEVEL_LABEL } from '../components/ui'
 import { WeekRings } from '../components/WeekRings'
@@ -103,6 +104,10 @@ export function Today() {
       )}
 
       <WeekRings t={t} runs={runs} walks={walks} gym={gym} marks={marks} />
+
+      <Card title="Kalori hari ini" action={<a className="link" href={href('catat', { tab: 'makan' })}>Catat makan <Icon name="chevron" size={14} /></a>}>
+        <EnergySummary date={t} compact />
+      </Card>
 
       {showRace && <RaceResultCard name={profile.raceName} date={profile.raceDate} result={result} />}
 
