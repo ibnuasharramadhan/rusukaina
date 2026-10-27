@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { FoodAiCard } from '../components/FoodAiCard'
 import { ShoesCard } from '../components/ShoesCard'
 import { StravaCard } from '../components/StravaCard'
 import { Card, Field, num, PageHeader } from '../components/ui'
@@ -25,6 +26,7 @@ export function Info() {
       <NotifCard />
       <StravaCard />
       <ShoesCard />
+      <FoodAiCard />
       <Zones />
       <Safety />
       <GymGuide />
@@ -201,12 +203,12 @@ function PlanCard() {
 }
 
 function DataTools() {
-  const { runs, walks, daily, gym, profile, refresh } = useData()
+  const { runs, walks, daily, gym, foods, profile, refresh } = useData()
   const [msg, setMsg] = useState('')
   const [confirmWipe, setConfirmWipe] = useState(false)
   const [pasted, setPasted] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
-  const summary = coachSummary({ runs, walks, daily, gym, until: today(), days: 7, medTimes: profile.medSchedule?.map((x) => x.time) })
+  const summary = coachSummary({ runs, walks, daily, gym, foods, until: today(), days: 7, medTimes: profile.medSchedule?.map((x) => x.time) })
 
   async function doExport() {
     await downloadBackup()
@@ -218,7 +220,7 @@ function DataTools() {
     try {
       const res = await importAll(JSON.parse(text))
       await refresh()
-      setMsg(`Impor selesai: ${res.runs} lari, ${res.daily} catatan harian, ${res.gym} gym, ${res.marks} tanda jadwal.`)
+      setMsg(`Impor selesai: ${res.runs} lari, ${res.daily} catatan harian, ${res.gym} gym, ${res.marks} tanda jadwal${res.foods ? `, ${res.foods} makanan` : ''}.`)
       return true
     } catch (e) {
       setMsg(`Gagal impor: ${e instanceof SyntaxError ? "teks bukan JSON yang utuh, pastikan tersalin semua" : (e as Error).message}`)

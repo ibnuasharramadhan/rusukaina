@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { DailyForm } from '../components/DailyForm'
+import { FoodSection } from '../components/FoodLog'
 import { ShareSheet } from '../components/ShareSheet'
 import { Icon } from '../components/icons'
 import { Card, Field, LevelBadge, num, PageHeader, Segmented } from '../components/ui'
@@ -18,7 +19,7 @@ import { useData } from '../lib/store'
 import type { GymLog, GymSet, RunLog, RunType } from '../lib/types'
 import { karvonenZones, zoneFor } from '../lib/zones'
 
-type Tab = 'lari' | 'gym' | 'harian'
+type Tab = 'lari' | 'gym' | 'harian' | 'makan'
 
 const TYPE_LABEL: Record<RunType, string> = { treadmill: 'treadmill', outdoor: 'luar', race: 'race', walk: 'jalan kaki' }
 
@@ -28,13 +29,14 @@ export function Log({ params }: { params: URLSearchParams }) {
   const setTab = (t: Tab) => { location.hash = href('catat', { tab: t }) }
   return (
     <div className="page">
-      <PageHeader eyebrow={profile.trackBp ? 'Lari, gym, tensi' : 'Lari, gym, HR'} title="Catat" />
+      <PageHeader eyebrow={profile.trackBp ? 'Lari, gym, tensi, makan' : 'Lari, gym, HR, makan'} title="Catat" />
       <Segmented<Tab> value={tab} onChange={setTab} options={[
-        { value: 'lari', label: 'Lari/jalan' }, { value: 'gym', label: 'Gym' }, { value: 'harian', label: profile.trackBp ? 'Tensi & HR' : 'HR & tidur' },
+        { value: 'lari', label: 'Lari/jalan' }, { value: 'gym', label: 'Gym' }, { value: 'harian', label: profile.trackBp ? 'Tensi & HR' : 'HR & tidur' }, { value: 'makan', label: 'Makan' },
       ]} />
       {tab === 'lari' && <RunSection key={params.toString()} params={params} />}
       {tab === 'gym' && <GymSection key={params.toString()} params={params} />}
       {tab === 'harian' && <DailySection key={params.toString()} params={params} />}
+      {tab === 'makan' && <FoodSection key={params.toString()} params={params} />}
     </div>
   )
 }
@@ -60,6 +62,7 @@ function RunSection({ params }: { params: URLSearchParams }) {
     splits: editing?.splits ?? '',
     notes: editing?.notes ?? '',
     shoeId: editing ? editing.shoeId ?? '' : defaultShoeId(shoes, all) ?? '',
+    kcal: editing?.kcal ? String(editing.kcal) : '',
   }))
   const shoeOptions = shoes.filter((x) => !x.retired || x.id === f.shoeId)
   const [err, setErr] = useState('')
@@ -84,7 +87,7 @@ function RunSection({ params }: { params: URLSearchParams }) {
     const run: RunLog = {
       id: editing?.id ?? uid(), date: f.date, time: f.time || undefined, type: f.type,
       distanceKm: dist, durationSec: dur, avgHr: avg, maxHr: num(f.maxHr), cadence: num(f.cadence), rpe: num(f.rpe),
-      splits: f.splits.trim() || undefined, notes: f.notes.trim() || undefined, shoeId: f.shoeId || undefined,
+      splits: f.splits.trim() || undefined, notes: f.notes.trim() || undefined, shoeId: f.shoeId || undefined, kcal: num(f.kcal),
       createdAt: editing?.createdAt ?? now, updatedAt: now,
     }
     await saveRun(run)
@@ -92,7 +95,7 @@ function RunSection({ params }: { params: URLSearchParams }) {
     await refresh()
     setErr('')
     setSaved(run)
-    if (!editing) setF({ ...f, distance: '', duration: '', avgHr: '', maxHr: '', cadence: '', rpe: '', splits: '', notes: '', shoeId: f.shoeId })
+    if (!editing) setF({ ...f, distance: '', duration: '', avgHr: '', maxHr: '', cadence: '', rpe: '', splits: '', notes: '', kcal: '', shoeId: f.shoeId })
   }
 
   return (
@@ -123,10 +126,11 @@ function RunSection({ params }: { params: URLSearchParams }) {
             <Field label="HR maks"><input inputMode="numeric" value={f.maxHr} onChange={set('maxHr')} /></Field>
             <Field label="Cadence"><input inputMode="numeric" value={f.cadence} onChange={set('cadence')} placeholder="163" /></Field>
           </div>
-          <div className="row3">
+          <div className="row2 even">
             <Field label="RPE (1–10)"><input inputMode="numeric" value={f.rpe} onChange={set('rpe')} /></Field>
-            <div className="span2"><Field label="Split per km"><input value={f.splits} onChange={set('splits')} placeholder="7:16, 6:46, …" /></Field></div>
+            <Field label="Kalori (kkal)" hint="kalori aktif dari jam"><input inputMode="numeric" value={f.kcal} onChange={set('kcal')} placeholder="350" /></Field>
           </div>
+          <Field label="Split per km"><input value={f.splits} onChange={set('splits')} placeholder="7:16, 6:46, …" /></Field>
           {shoeOptions.length > 0 && (
             <Field label="Sepatu">
               <select value={f.shoeId} onChange={set('shoeId')}>
@@ -227,6 +231,7 @@ function GymSection({ params }: { params: URLSearchParams }) {
   const [workout, setWorkout] = useState<'A' | 'B'>(editing?.workout ?? (params.get('w') as 'A' | 'B') ?? (sessionOn(today())?.kind === 'gymB' ? 'B' : 'A'))
   const [rpe, setRpe] = useState(editing?.rpe ? String(editing.rpe) : '')
   const [notes, setNotes] = useState(editing?.notes ?? '')
+  const [kcal, setKcal] = useState(editing?.kcal ? String(editing.kcal) : '')
   const saved = params.get('saved') === '1'
   const ready = dayReadiness(profile, daily, date)
 
@@ -258,7 +263,7 @@ function GymSection({ params }: { params: URLSearchParams }) {
     const id = editing?.id ?? uid()
     if (!editing) celebrate()
     await saveGym({
-      id, date, workout, exercises: [...sets, ...extras], rpe: num(rpe), notes: notes.trim() || undefined,
+      id, date, workout, exercises: [...sets, ...extras], rpe: num(rpe), notes: notes.trim() || undefined, kcal: num(kcal),
       createdAt: editing?.createdAt ?? now, updatedAt: now,
     })
     await refresh()
@@ -331,8 +336,9 @@ function GymSection({ params }: { params: URLSearchParams }) {
         </div>
         <div className="row2">
           <Field label="RPE sesi (1–10)" hint="Target 6–7"><input inputMode="numeric" value={rpe} onChange={(e) => setRpe(e.target.value)} /></Field>
-          <Field label="Catatan"><input value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
+          <Field label="Kalori (kkal)" hint="dari jam, kalau ada"><input inputMode="numeric" value={kcal} onChange={(e) => setKcal(e.target.value)} placeholder="200" /></Field>
         </div>
+        <Field label="Catatan"><input value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
         <div className="row">
           <button className="btn primary" onClick={submit}>Simpan sesi</button>
           {saved && <span role="status">✓ Tersimpan</span>}

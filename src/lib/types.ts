@@ -46,6 +46,8 @@ export interface RunLog {
   notes?: string
   /** Sepatu yang dipakai (lihat Shoe). */
   shoeId?: string
+  /** Kalori aktif dari jam (kkal); kosong = diperkirakan dari jarak dan berat. */
+  kcal?: number
   createdAt: number
   updatedAt: number
 }
@@ -108,6 +110,28 @@ export interface GymLog {
   exercises: GymSet[]
   rpe?: number
   notes?: string
+  /** Kalori dari jam (kkal); kosong = diperkirakan. */
+  kcal?: number
+  createdAt: number
+  updatedAt: number
+}
+
+export type MealSlot = 'pagi' | 'siang' | 'malam' | 'camilan'
+
+/** Satu makanan/minuman yang dimakan. Angka gizi per porsi yang dimakan. */
+export interface FoodEntry {
+  id: string
+  date: ISODate
+  meal: MealSlot
+  name: string
+  /** Porsi, mis. "1 piring", "2 potong". */
+  portion?: string
+  kcal: number
+  proteinG?: number
+  carbsG?: number
+  fatG?: number
+  /** Asal angka: daftar bawaan, foto AI, atau isi sendiri. */
+  source: 'daftar' | 'ai' | 'manual'
   createdAt: number
   updatedAt: number
 }
@@ -180,4 +204,5 @@ export interface ExportFile {
   marks: SessionMark[]
   /** Opsional supaya file ekspor lama tetap bisa diimpor. */
   shoes?: Shoe[]
+  foods?: FoodEntry[]
 }

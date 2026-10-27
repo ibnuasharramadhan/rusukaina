@@ -1,10 +1,11 @@
 import { MAX_RUNS_PER_WEEK, plan, sessionOn, weekOf } from '../data/plan'
 import { averageBp, dayBp } from './bp'
 import { measures } from './bodycomp'
+import { totals } from './nutrition'
 import { addDays, formatDate, type ISODate } from './date'
 import { formatDuration, formatPace, paceSecPerKm } from './pace'
 import { bpLevel } from './safety'
-import type { DailyLog, GymLog, PlannedSession, RunLog, SessionMark, SessionStatus } from './types'
+import type { DailyLog, FoodEntry, GymLog, PlannedSession, RunLog, SessionMark, SessionStatus } from './types'
 
 export interface WeekStat {
   no: number
@@ -98,7 +99,7 @@ function medLine(d: DailyLog, times: string[], until: ISODate): string | null {
  * Ringkasan teks untuk ditempel ke chat coach. Sengaja plain text supaya
  * terbaca di mana saja (chat, WhatsApp, catatan).
  */
-export function coachSummary(input: { runs: RunLog[]; walks?: RunLog[]; daily: DailyLog[]; gym: GymLog[]; until: ISODate; days?: number; medTimes?: string[] }): string {
+export function coachSummary(input: { runs: RunLog[]; walks?: RunLog[]; daily: DailyLog[]; gym: GymLog[]; foods?: FoodEntry[]; until: ISODate; days?: number; medTimes?: string[] }): string {
   const days = input.days ?? 7
   const from = addDays(input.until, -(days - 1))
   const inRange = (d: ISODate) => d >= from && d <= input.until
@@ -145,5 +146,11 @@ export function coachSummary(input: { runs: RunLog[]; walks?: RunLog[]; daily: D
   const { weight, waist } = measures(input.daily)
   const w = weight.at(-1), wc = waist.at(-1)
   if (w || wc) lines.push(`Tubuh terakhir: ${[w && `berat ${w.value} kg (${formatDate(w.date)})`, wc && `lingkar perut ${wc.value} cm (${formatDate(wc.date)})`].filter(Boolean).join(', ')}`)
+  const eaten = (input.foods ?? []).filter((f) => inRange(f.date))
+  const foodDays = new Set(eaten.map((f) => f.date)).size
+  if (foodDays) {
+    const t = totals(eaten)
+    lines.push(`Makan (${foodDays} hari dicatat): rata-rata ${Math.round(t.kcal / foodDays)} kkal, protein ${Math.round(t.proteinG / foodDays)} g per hari`)
+  }
   return lines.join('\n')
 }

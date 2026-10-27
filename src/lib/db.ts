@@ -1,28 +1,33 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
 import { LEGACY_PROFILE } from '../data/plan'
-import type { DailyLog, ExportFile, GymLog, Profile, RunLog, SessionMark, Shoe } from './types'
+import type { DailyLog, ExportFile, FoodEntry, GymLog, Profile, RunLog, SessionMark, Shoe } from './types'
 
 interface LatihanDB extends DBSchema {
   runs: { key: string; value: RunLog; indexes: { date: string } }
   daily: { key: string; value: DailyLog }
   gym: { key: string; value: GymLog; indexes: { date: string } }
   marks: { key: string; value: SessionMark }
+  foods: { key: string; value: FoodEntry; indexes: { date: string } }
   meta: { key: string; value: unknown }
 }
 
 const DB_NAME = 'latihan'
-const DB_VERSION = 1
+const DB_VERSION = 2
 
 let dbPromise: Promise<IDBPDatabase<LatihanDB>> | null = null
 
 export function db() {
   dbPromise ??= openDB<LatihanDB>(DB_NAME, DB_VERSION, {
-    upgrade(d) {
-      d.createObjectStore('runs', { keyPath: 'id' }).createIndex('date', 'date')
-      d.createObjectStore('daily', { keyPath: 'date' })
-      d.createObjectStore('gym', { keyPath: 'id' }).createIndex('date', 'date')
-      d.createObjectStore('marks', { keyPath: 'date' })
-      d.createObjectStore('meta')
+    upgrade(d, oldVersion) {
+      if (oldVersion < 1) {
+        d.createObjectStore('runs', { keyPath: 'id' }).createIndex('date', 'date')
+        d.createObjectStore('daily', { keyPath: 'date' })
+        d.createObjectStore('gym', { keyPath: 'id' }).createIndex('date', 'date')
+        d.createObjectStore('marks', { keyPath: 'date' })
+        d.createObjectStore('meta')
+      }
+      // v2: catatan makanan
+      if (oldVersion < 2) d.createObjectStore('foods', { keyPath: 'id' }).createIndex('date', 'date')
     },
   })
   return dbPromise
@@ -73,6 +78,17 @@ export async function saveGym(g: GymLog) {
 }
 export async function deleteGym(id: string) {
   await (await db()).delete('gym', id)
+}
+
+// --- Makanan
+export async function listFoods(): Promise<FoodEntry[]> {
+  return (await (await db()).getAll('foods')).sort((a, b) => byDate(a, b) || a.createdAt - b.createdAt)
+}
+export async function saveFood(f: FoodEntry) {
+  await (await db()).put('foods', { ...f, updatedAt: Date.now() })
+}
+export async function deleteFood(id: string) {
+  await (await db()).delete('foods', id)
 }
 
 // --- Tanda selesai/skip di jadwal
@@ -135,10 +151,11 @@ export async function exportAll(): Promise<ExportFile> {
     gym: await listGym(),
     marks: await listMarks(),
     shoes: await listShoes(),
+    foods: await listFoods(),
   }
 }
 
-export interface ImportResult { runs: number; daily: number; gym: number; marks: number; shoes: number }
+export interface ImportResult { runs: number; daily: number; gym: number; marks: number; shoes: number; foods: number }
 
 export function validateExport(x: unknown): ExportFile {
   const f = x as Partial<ExportFile>
@@ -157,10 +174,10 @@ export function validateExport(x: unknown): ExportFile {
 export async function importAll(raw: unknown, opts: { includeProfile?: boolean } = {}): Promise<ImportResult> {
   const f = validateExport(raw)
   const d = await db()
-  const res: ImportResult = { runs: 0, daily: 0, gym: 0, marks: 0, shoes: 0 }
-  const tx = d.transaction(['runs', 'daily', 'gym', 'marks', 'meta'], 'readwrite')
+  const res: ImportResult = { runs: 0, daily: 0, gym: 0, marks: 0, shoes: 0, foods: 0 }
+  const tx = d.transaction(['runs', 'daily', 'gym', 'marks', 'foods', 'meta'], 'readwrite')
 
-  async function merge<S extends 'runs' | 'daily' | 'gym' | 'marks'>(store: S, items: LatihanDB[S]['value'][], key: (v: LatihanDB[S]['value']) => string) {
+  async function merge<S extends 'runs' | 'daily' | 'gym' | 'marks' | 'foods'>(store: S, items: LatihanDB[S]['value'][], key: (v: LatihanDB[S]['value']) => string) {
     const os = tx.objectStore(store)
     for (const item of items) {
       const existing = await os.get(key(item))
@@ -175,6 +192,7 @@ export async function importAll(raw: unknown, opts: { includeProfile?: boolean }
   await merge('daily', f.daily, (v) => v.date)
   await merge('gym', f.gym, (v) => v.id)
   await merge('marks', f.marks, (v) => v.date)
+  if (Array.isArray(f.foods)) await merge('foods', f.foods, (v) => v.id)
   if (Array.isArray(f.shoes) && f.shoes.length) {
     const meta = tx.objectStore('meta')
     const shoes = new Map(((await meta.get('shoes')) as Shoe[] | undefined ?? []).map((s) => [s.id, s]))
@@ -191,10 +209,10 @@ export async function importAll(raw: unknown, opts: { includeProfile?: boolean }
 
 export async function wipeAll() {
   const d = await db()
-  const tx = d.transaction(['runs', 'daily', 'gym', 'marks', 'meta'], 'readwrite')
+  const tx = d.transaction(['runs', 'daily', 'gym', 'marks', 'foods', 'meta'], 'readwrite')
   await Promise.all([
     tx.objectStore('runs').clear(), tx.objectStore('daily').clear(), tx.objectStore('gym').clear(),
-    tx.objectStore('marks').clear(), tx.objectStore('meta').clear(),
+    tx.objectStore('marks').clear(), tx.objectStore('foods').clear(), tx.objectStore('meta').clear(),
   ])
   await tx.done
 }
