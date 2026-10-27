@@ -58,7 +58,7 @@ export function DailyForm({ date, compact, onSaved }: { date: string; compact?: 
       date, sys: amAvg?.sys, dia: amAvg?.dia, restingHr: hr, sleepHours: num(f.sleepHours),
       sysPm: pmAvg?.sys, diaPm: pmAvg?.dia,
       bpAm: am.length > 1 ? am : undefined, bpPm: pm.length > 1 ? pm : undefined,
-      medTaken: !profile.medName ? undefined : scheduled ? cur?.medTaken : f.medTaken, medDoses: cur?.medDoses,
+      medTaken: !profile.medName ? undefined : scheduled ? cur?.medTaken : f.medTaken, medDoses: cur?.medDoses, weightKg: cur?.weightKg, waistCm: cur?.waistCm,
       dizzy: profile.medName && f.dizzy ? true : undefined, dryCough: profile.medName && f.dryCough ? true : undefined,
       symptoms: f.symptoms.trim() || undefined, notes: f.notes.trim() || undefined,
       painAreas: f.painAreas.length ? f.painAreas : undefined, painScore: f.painAreas.length ? pain : undefined, updatedAt: Date.now(),
