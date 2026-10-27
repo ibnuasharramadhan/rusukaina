@@ -1,5 +1,6 @@
 import { MAX_RUNS_PER_WEEK, plan, sessionOn, weekOf } from '../data/plan'
 import { averageBp, dayBp } from './bp'
+import { measures } from './bodycomp'
 import { addDays, formatDate, type ISODate } from './date'
 import { formatDuration, formatPace, paceSecPerKm } from './pace'
 import { bpLevel } from './safety'
@@ -141,5 +142,8 @@ export function coachSummary(input: { runs: RunLog[]; walks?: RunLog[]; daily: D
   }
   const avg = bpAverage(input.daily, days, input.until)
   if (avg) lines.push(`Rata-rata tensi: ${avg.sys}/${avg.dia} (${avg.n} hari)`)
+  const { weight, waist } = measures(input.daily)
+  const w = weight.at(-1), wc = waist.at(-1)
+  if (w || wc) lines.push(`Tubuh terakhir: ${[w && `berat ${w.value} kg (${formatDate(w.date)})`, wc && `lingkar perut ${wc.value} cm (${formatDate(wc.date)})`].filter(Boolean).join(', ')}`)
   return lines.join('\n')
 }

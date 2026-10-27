@@ -24,7 +24,7 @@
   --warning: #f2a516;
   --serious: #ec835a;
   --critical: #d63a3a;
-  --critical-text: #c62f2f;
+  --critical-text: #b02727;
   --radius: 18px;
   --radius-s: 12px;
   --shadow: 0 1px 2px rgba(22, 20, 15, 0.04), 0 4px 16px rgba(22, 20, 15, 0.04);
@@ -563,3 +563,26 @@ details summary { cursor: pointer; font-weight: 600; }
 .add-ex input { flex: 1; min-width: 0; }
 .ex-h .link.danger { margin-left: 8px; }
 .wr-extra { font-size: 0.7rem; font-weight: 500; }
+
+/* Komposisi tubuh: skala BMI, lingkar perut, rasio pinggang-tinggi. */
+.body-card { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.body-metric { display: grid; gap: 6px; }
+.body-metric-h { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.body-metric-v { font-family: var(--font-num); font-size: 2rem; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+.body-metric-v small { font-size: 0.9rem; color: var(--muted); font-weight: 500; }
+.scale { padding: 6px 0 16px; }
+.scale-bar { position: relative; height: 10px; border-radius: 999px; background: var(--surface-2); }
+.scale-seg { position: absolute; top: 0; bottom: 0; }
+.scale-seg:first-child { border-radius: 999px 0 0 999px; }
+.scale-seg:nth-last-child(2) { border-radius: 0 999px 999px 0; }
+.scale-seg.lv-green { background: color-mix(in srgb, var(--good) 70%, transparent); }
+.scale-seg.lv-yellow { background: color-mix(in srgb, var(--warning) 75%, transparent); }
+.scale-seg.lv-red { background: color-mix(in srgb, var(--critical) 70%, transparent); }
+.scale-mark { position: absolute; top: -5px; width: 4px; height: 20px; margin-left: -2px; border-radius: 3px; background: var(--ink); box-shadow: 0 0 0 2px var(--surface); }
+.scale-ticks { position: relative; height: 0; }
+.scale-ticks span { position: absolute; top: 4px; transform: translateX(-50%); font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.body-targets { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; }
+.body-targets ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: 0.88rem; }
+.body-trend { display: grid; gap: 8px; }
+.body-form summary { cursor: pointer; font-weight: 600; }
+.body-form .form { margin-top: 10px; }

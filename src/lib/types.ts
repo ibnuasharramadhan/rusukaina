@@ -74,6 +74,9 @@ export interface DailyLog {
   /** Isian mentah bila diukur lebih dari sekali; sys/dia dan sysPm/diaPm berisi rata-ratanya. */
   bpAm?: BpReading[]
   bpPm?: BpReading[]
+  /** Berat badan dan lingkar perut (diukur sesekali, mis. seminggu sekali). */
+  weightKg?: number
+  waistCm?: number
   sleepHours?: number
   medTaken?: boolean
   /** Jam dosis yang sudah diminum hari ini (cocok dengan Profile.medSchedule[].time). */
@@ -136,6 +139,9 @@ export interface Profile {
   medSchedule?: MedDose[]
   /** Aturan dari dokter (mis. obat yang harus dihindari), satu per baris. */
   medNotes?: string
+  /** Untuk BMI dan batas lingkar perut. */
+  sex?: 'm' | 'f'
+  heightCm?: number
   /** Sumber rencana. Kosong = profil lama milik Ibnu (preset). */
   plan?: PlanSource
 }

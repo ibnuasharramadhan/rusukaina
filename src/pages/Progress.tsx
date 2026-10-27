@@ -1,3 +1,4 @@
+import { BodyCard } from '../components/BodyCard'
 import { BarChart, LineChart } from '../components/charts'
 import { Card, PageHeader, Stat } from '../components/ui'
 import { plan, weekOf } from '../data/plan'
@@ -34,6 +35,8 @@ export function Progress() {
           ? <Stat label="Tensi 7 hari" value={avg7 ? `${avg7.sys}/${avg7.dia}` : '–'} sub={avg7 ? `${avg7.n} hari` : 'belum ada'} />
           : <Stat label="HR istirahat 7 hari" value={hr7 ?? '–'} sub={hr7 ? `batas ${profile.restingHrBaseline + 7}` : 'belum ada'} />}
       </div>
+
+      <BodyCard />
 
       {profile.trackBp && <Card title="Tekanan darah">
         <p className="muted small">Per hari: rata-rata pagi dan malam (atau yang dicatat saja). Target dokter umumnya &lt;130–140. Garis 140 = batas kuning, 160 = jangan latihan.</p>
