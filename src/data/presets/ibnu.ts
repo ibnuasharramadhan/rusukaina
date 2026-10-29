@@ -23,7 +23,7 @@ const WEEKS: WeekSpec[] = [
   { no: 2, start: '2026-10-05', end: '2026-10-11', longRun: "Easy 40'", midweek: "25–30'", longMin: 40, midMin: 25 },
   { no: 3, start: '2026-10-12', end: '2026-10-18', longRun: "Easy 45' / ±5,5 km", midweek: "30'", longMin: 45, longKm: 5.5, midMin: 30 },
   { no: 4, start: '2026-10-19', end: '2026-10-25', longRun: 'Tidak lari (pemulihan kaki)', midweek: "Jalan santai 20–30' 3–4x", note: 'Pemulihan kaki: tanpa lari. Jalan santai, penguatan kaki 3x, gym tubuh atas. Berhenti kalau jalan memicu nyeri.', deload: true },
-  { no: 5, start: '2026-10-26', end: '2026-11-01', longRun: "Tahap 2: (lari 2' / jalan 1') x7", midweek: 'Jalan santai + penguatan kaki', note: "Lari 22 Okt memicu nyeri lagi, lalu istirahat 23–25 Okt. Betis sakit saat tes jalan incline 27 Okt, jadi Rabu tes ulang jalan datar; lari-jalan tahap 2 (±20') mulai Sabtu bila bebas nyeri. Nyeri muncul lagi: turun 1 tahap dan istirahat 2 hari." },
+  { no: 5, start: '2026-10-26', end: '2026-11-01', longRun: "Tahap 2: (lari 2' / jalan 1') x7", midweek: 'Jalan santai + penguatan kaki', note: "Lari 22 Okt memicu nyeri lagi, lalu istirahat 23–25 Okt. Betis sakit saat tes jalan incline 27 Okt dan saat lari 5 km 29 Okt. Jumat gym tubuh atas + calf/tibialis raise, Sabtu lari easy maks 25' sambil mencatat menit nyeri. Nyeri muncul lagi: turun 1 tahap dan istirahat 2 hari." },
   { no: 6, start: '2026-11-02', end: '2026-11-08', longRun: "Easy 55'", midweek: "30'", note: 'Tes 3 km di HR 140–145: catat pace, bandingkan dengan 1 Okt', longMin: 55, midMin: 30 },
   { no: 7, start: '2026-11-09', end: '2026-11-15', longRun: "Easy 60' / ±7 km", midweek: "30' + 4x strides 15\"", note: 'Strides = akselerasi santai, bukan sprint', longMin: 60, longKm: 7, midMin: 30, strides: 4 },
   { no: 8, start: '2026-11-16', end: '2026-11-22', longRun: "Easy 50'", midweek: "30' + 6x strides", note: 'Deload', deload: true, longMin: 50, midMin: 30, strides: 6 },
@@ -69,8 +69,6 @@ function sessionFor(date: ISODate, w: WeekSpec): PlannedSession {
 }
 
 const LEG = 'Penguatan kaki: calf raise 2x12, angkat ujung kaki (tibialis raise) 2x15, glute bridge 2x12.'
-const STAGE2 = "Tahap 2: (lari 2' / jalan 1') x7"
-const STAGE2_DETAIL = 'Treadmill, ±20 menit, HR ≤145. Hanya kalau pagi ini kaki bebas nyeri dan tidak pegal berat. Nyeri saat lari: berhenti, turun ke tahap 1, istirahat 2 hari.'
 
 // Perubahan per tanggal dari thread coaching (revisi 8 Okt), menimpa template mingguan.
 const OVERRIDES: Record<ISODate, Omit<PlannedSession, 'date'>> = {
@@ -96,9 +94,9 @@ const OVERRIDES: Record<ISODate, Omit<PlannedSession, 'date'>> = {
   '2026-10-27': { kind: 'walk', title: "Tes jalan cepat 25–30'", minutes: 30, detail: 'Treadmill, tanpa lari. Syarat lari besok: tidak nyeri selama jalan dan sampai malam. Masih pegal berat dari leg day: jalan santai saja.' },
   '2026-10-28': { kind: 'walk', title: "Tes ulang jalan datar 25'", minutes: 25, detail: 'Treadmill incline 0–1%, 5–5,5 km/j, tanpa lari. Tes 27 Okt di incline 10% membuat betis sakit saat jalan. Bebas nyeri = lari-jalan pertama Sabtu.' },
   '2026-10-29': { kind: 'gymB', title: 'Gym B (full body)', minutes: 40, detail: 'Gerakan kaki hanya kalau tidak nyeri. Tambahkan gerakan tarik (lat pulldown/row) dan core.' },
-  '2026-10-30': { kind: 'rest', title: 'Libur' },
-  '2026-10-31': { kind: 'easy', title: STAGE2, minutes: 20, detail: `${STAGE2_DETAIL} Hanya kalau tes jalan datar Rabu bebas nyeri; kalau tidak, jalan santai saja. Dua sesi tanpa nyeri (saat lari dan besok paginya) = boleh naik ke tahap 3: (lari 4' / jalan 1') x5.` },
-  '2026-11-01': { kind: 'walk', title: "Jalan santai 20–30'", minutes: 25, detail: 'Opsional. Cek kaki pagi ini setelah lari kemarin.' },
+  '2026-10-30': { kind: 'gymB', title: 'Gym B tubuh atas + calf/tibialis raise', minutes: 40, detail: 'Tanpa lari. Tubuh atas seperti biasa, ditambah calf raise dan tibialis raise 2×15 pelan, berhenti kalau nyeri. Kamis 29 Okt diganti lari 5 km dan betis bawah sakit.' },
+  '2026-10-31': { kind: 'easy', title: "Lari easy maks 25'", minutes: 25, detail: 'HR maks 145. Bila betis nyeri, jalan 1 menit lalu lanjut; catat di menit ke berapa nyeri muncul. Nyeri tidak hilang saat jalan: berhenti.' },
+  '2026-11-01': { kind: 'walk', title: "Jalan santai 20–30' atau istirahat", minutes: 25, detail: 'Opsional. Cek betis pagi ini setelah lari kemarin.' },
 }
 
 function buildSchedule(): PlannedSession[] {
