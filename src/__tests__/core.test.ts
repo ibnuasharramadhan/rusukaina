@@ -96,7 +96,7 @@ describe('jadwal', () => {
     expect(dayName('2026-12-05')).toBe('Sabtu')
   })
   it('pola mingguan: Sen Gym A, Rab lari, Kam Gym B, Sab long run', () => {
-    expect(sessionOn('2026-11-02')?.kind).toBe('gymA')
+    expect(sessionOn('2026-11-09')?.kind).toBe('gymA')
     expect(sessionOn('2026-10-14')?.kind).toBe('easy')
     expect(sessionOn('2026-10-15')?.kind).toBe('gymB')
     expect(sessionOn('2026-10-17')?.title).toContain("45'")
@@ -205,14 +205,13 @@ describe('revisi jadwal 8 Okt dan aturan lari', () => {
     expect(runRuleWarnings('2026-11-07', runs)).toEqual([])
   })
 
-  it('revisi 19 Okt: minggu 4 tanpa lari, minggu 5 satu lari easy Minggu', () => {
+  it('revisi 19 Okt: minggu 4 tanpa lari, minggu 5 tanpa lari terjadwal (31 Okt–1 Nov istirahat)', () => {
     const w4 = SCHEDULE.filter((x) => x.date >= '2026-10-19' && x.date <= '2026-10-25')
     expect(w4.filter((x) => x.kind === 'easy' || x.kind === 'long')).toEqual([])
     expect(w4.filter((x) => x.kind === 'walk').length).toBe(4)
     expect(w4.filter((x) => /penguatan kaki/.test(x.title)).length).toBe(3)
     const w5runs = SCHEDULE.filter((x) => x.date >= '2026-10-26' && x.date <= '2026-11-01' && x.kind === 'easy')
-    expect(w5runs.map((x) => x.date)).toEqual(['2026-11-01'])
-    expect(w5runs[0].title).toBe("Lari easy maks 30'")
+    expect(w5runs).toEqual([])
   })
 
   it('Minggu 11 Okt boleh jadi lari ke-4', () => {
