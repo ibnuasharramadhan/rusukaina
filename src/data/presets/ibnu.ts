@@ -1,5 +1,5 @@
 // Preset: rencana Ibnu 1 Okt – 5 Des 2026 (UI Ultra 7K), disalin dari
-// latihan/rencana-okt-des-2026.md (revisi 1 Okt) plus revisi coach per tanggal (8 Okt, 19 Okt, 2–3 Nov).
+// latihan/rencana-okt-des-2026.md (revisi 1 Okt) plus revisi coach per tanggal (8 Okt, 19 Okt, 2–5 Nov).
 
 import { addDays, fromISO, type ISODate } from '../../lib/date'
 import type { PlannedSession, Profile } from '../../lib/types'
@@ -53,7 +53,9 @@ function sessionFor(date: ISODate, w: WeekSpec): PlannedSession {
       date, kind: 'easy', title: `Lari easy treadmill${w.midMin ? ` ${w.midMin}'` : ''}${w.strides ? ` + ${w.strides}x strides` : ''}`,
       minutes: w.midMin, strides: w.strides, detail: 'HR ≤145. Kalau capek, ganti Gym B.',
     }
-    case 4: return { date, kind: 'gymB', title: 'Gym B (full body)', minutes: 40, detail: `Jam istirahat siang, 35–40'${deload}` }
+    case 4:
+      if (w.no >= 7) return { date, kind: 'gymB', title: 'Gym B tubuh atas', minutes: 40, detail: `${GYM_B_UPPER}${deload}` }
+      return { date, kind: 'gymB', title: 'Gym B (full body)', minutes: 40, detail: `Jam istirahat siang, 35–40'${deload}` }
     case 5: return { date, kind: 'rest', title: 'Libur' }
     case 6: return {
       date, kind: 'long', title: `Long run easy ${w.longMin}'${w.longKm ? ` / ±${String(w.longKm).replace('.', ',')} km` : ''}`,
@@ -67,6 +69,9 @@ function sessionFor(date: ISODate, w: WeekSpec): PlannedSession {
       }
   }
 }
+
+// Revisi 5 Nov: Gym B jadi tubuh atas dengan gerakan tarik; seated dumbbell press diganti.
+const GYM_B_UPPER = 'Shoulder press 25–30 kg 3x10, lateral raise 5 kg 3x10, lat pulldown 3x10 dan seated row 3x10 (±20–25 kg), triceps kickback 12,5 kg 3x10, cable pushdown 25 kg 3x10.'
 
 const LEG = 'Penguatan kaki: calf raise 2x12, angkat ujung kaki (tibialis raise) 2x15, glute bridge 2x12.'
 

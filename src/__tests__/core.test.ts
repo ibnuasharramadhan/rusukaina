@@ -214,6 +214,15 @@ describe('revisi jadwal 8 Okt dan aturan lari', () => {
     expect(w5runs).toEqual([])
   })
 
+  it('revisi 5 Nov: Gym B mulai minggu 7 tubuh atas dengan lat pulldown dan seated row', () => {
+    const g = sessionOn('2026-11-12')
+    expect(g?.kind).toBe('gymB')
+    expect(g?.title).toBe('Gym B tubuh atas')
+    expect(g?.detail).toMatch(/lat pulldown 3x10 dan seated row/)
+    expect(g?.detail).not.toMatch(/seated dumbbell/i)
+    expect(sessionOn('2026-11-19')?.detail).toMatch(/deload/)
+  })
+
   it('Minggu 11 Okt boleh jadi lari ke-4', () => {
     const runs = ['2026-10-05', '2026-10-07', '2026-10-08'].map(run)
     expect(runRuleWarnings('2026-10-11', runs)).toEqual([])
