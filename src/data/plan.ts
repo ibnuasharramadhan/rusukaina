@@ -11,6 +11,7 @@ export interface WeekSpec extends PlanWeek {
   longMin?: number
   longKm?: number
   midMin?: number
+  midKm?: number
   strides?: number
 }
 
