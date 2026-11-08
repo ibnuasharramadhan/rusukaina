@@ -1,5 +1,5 @@
 // Preset: rencana Ibnu 1 Okt – 5 Des 2026 (UI Ultra 7K), disalin dari
-// latihan/rencana-okt-des-2026.md (revisi 1 Okt) plus revisi coach per tanggal (8 Okt, 19 Okt, 2–3 Nov).
+// latihan/rencana-okt-des-2026.md (revisi 1 Okt) plus revisi coach per tanggal (8 Okt, 19 Okt, 2–6 Nov).
 
 import { addDays, fromISO, type ISODate } from '../../lib/date'
 import type { PlannedSession, Profile } from '../../lib/types'
@@ -24,10 +24,11 @@ const WEEKS: WeekSpec[] = [
   { no: 3, start: '2026-10-12', end: '2026-10-18', longRun: "Easy 45' / ±5,5 km", midweek: "30'", longMin: 45, longKm: 5.5, midMin: 30 },
   { no: 4, start: '2026-10-19', end: '2026-10-25', longRun: 'Tidak lari (pemulihan kaki)', midweek: "Jalan santai 20–30' 3–4x", note: 'Pemulihan kaki: tanpa lari. Jalan santai, penguatan kaki 3x, gym tubuh atas. Berhenti kalau jalan memicu nyeri.', deload: true },
   { no: 5, start: '2026-10-26', end: '2026-11-01', longRun: "Tahap 2: (lari 2' / jalan 1') x7", midweek: 'Jalan santai + penguatan kaki', note: "Lari 22 Okt memicu nyeri lagi, lalu istirahat 23–25 Okt. Betis sakit saat tes jalan incline 27 Okt dan saat lari 5 km 29 Okt. Lari lagi Jumat 30 Okt. Sabtu gym tubuh atas + calf raise tanpa lari, Minggu lari easy maks 30' bila pagi bebas nyeri. Nyeri muncul lagi: turun 1 tahap dan istirahat 2 hari." },
-  { no: 6, start: '2026-11-02', end: '2026-11-08', longRun: "Lari pelan 35–40'", midweek: "30'", note: 'Sabtu–Minggu 31 Okt–1 Nov istirahat karena dada dan bahu pegal. Senin lari 5,25 km, Gym A geser ke Selasa. Selasa Gym A plus lari 2,21 km, jadi Rabu istirahat. Kamis Gym B, Jumat istirahat atau jalan santai, Sabtu lari pelan 35–40\'.', longMin: 38, midMin: 30 },
-  { no: 7, start: '2026-11-09', end: '2026-11-15', longRun: "Easy 60' / ±7 km", midweek: "30' + 4x strides 15\"", note: 'Strides = akselerasi santai, bukan sprint', longMin: 60, longKm: 7, midMin: 30, strides: 4 },
-  { no: 8, start: '2026-11-16', end: '2026-11-22', longRun: "Easy 50'", midweek: "30' + 6x strides", note: 'Deload', deload: true, longMin: 50, midMin: 30, strides: 6 },
-  { no: 9, start: '2026-11-23', end: '2026-11-29', longRun: "Easy 65' / ±8 km", midweek: "30'", note: 'Simulasi: sepatu, sarapan, minum sama dengan hari H', longMin: 65, longKm: 8, midMin: 30 },
+  { no: 6, start: '2026-11-02', end: '2026-11-08', longRun: 'Jumat 5,11 km', midweek: "30'", note: 'Sabtu–Minggu 31 Okt–1 Nov istirahat karena dada dan bahu pegal. Senin lari 5,25 km, Gym A geser ke Selasa. Selasa Gym A plus lari 2,21 km, jadi Rabu istirahat. Kamis Gym B, Jumat lari 5,11 km (maju dari Sabtu), jadi Sabtu–Minggu tanpa lari.', longMin: 38, midMin: 30 },
+  // Revisi 6 Nov: lari Sen/Rab/Jum 5K easy, Gym A Selasa, Gym B Kamis; lari Jumat dipanjangkan bertahap.
+  { no: 7, start: '2026-11-09', end: '2026-11-15', longRun: 'Jumat 5 km easy', midweek: 'Senin & Rabu 5 km easy', note: 'Pola baru: lari Senin, Rabu, Jumat (HR ≤145), Gym A Selasa, Gym B Kamis, akhir pekan jalan santai dan istirahat.', longKm: 5, midKm: 5 },
+  { no: 8, start: '2026-11-16', end: '2026-11-22', longRun: 'Jumat 5 km easy', midweek: 'Senin & Rabu 5 km easy', note: 'Deload: gym lebih ringan, lari tetap santai.', deload: true, longKm: 5, midKm: 5 },
+  { no: 9, start: '2026-11-23', end: '2026-11-29', longRun: 'Jumat 6–7 km easy', midweek: 'Senin & Rabu 5 km easy', note: 'Lari Jumat terpanjang sebelum race. Simulasi: sepatu, sarapan, minum sama dengan hari H.', longKm: 6.5, midKm: 5 },
   { no: 10, start: '2026-11-30', end: '2026-12-05', longRun: 'RACE Sabtu 5 Des', midweek: "Rabu 20' easy + 3 strides; Kamis/Jumat libur/jalan", note: 'Minggu race' },
 ]
 
@@ -42,6 +43,22 @@ function sessionFor(date: ISODate, w: WeekSpec): PlannedSession {
       case 4:
       case 5: return { date, kind: 'walk', title: 'Libur / jalan santai', detail: 'Simpan tenaga untuk Sabtu.' }
       case 6: return { date, kind: 'race', title: 'RACE: UI Ultra 7K', km: 7, detail: 'Km 1–2 HR ≤150, km 3–5 di 145–160, km 6–7 maks ~165.' }
+      default: return { date, kind: 'rest', title: 'Libur' }
+    }
+  }
+
+  if (w.no >= 7) {
+    const km = (n: number) => String(n).replace('.', ',')
+    switch (dow) {
+      case 1:
+      case 3: return { date, kind: 'easy', title: `Lari easy ${km(w.midKm!)} km`, km: w.midKm, detail: 'HR ≤145, treadmill. Pelankan atau jalan sebentar kalau HR naik.' }
+      case 2: return { date, kind: 'gymA', title: 'Gym A kaki + calf raise', minutes: 40, detail: `Jam istirahat siang, 35–40'${deload}` }
+      case 4: return { date, kind: 'gymB', title: 'Gym B tubuh atas', minutes: 40, detail: `${GYM_B_UPPER}${deload}` }
+      case 5: return {
+        date, kind: 'long', title: `Lari easy ${w.longKm === 6.5 ? '6–7' : km(w.longKm!)} km`, km: w.longKm,
+        detail: 'Lari utama minggu ini. HR ≤145; jalan sebentar kalau HR naik.',
+      }
+      case 6: return { date, kind: 'walk', title: "Jalan santai 30'", minutes: 30, detail: 'Calf raise boleh. Tidak lari.' }
       default: return { date, kind: 'rest', title: 'Libur' }
     }
   }
@@ -67,6 +84,9 @@ function sessionFor(date: ISODate, w: WeekSpec): PlannedSession {
       }
   }
 }
+
+// Revisi 5 Nov: Gym B jadi tubuh atas dengan gerakan tarik; seated dumbbell press diganti.
+const GYM_B_UPPER = 'Shoulder press 25–30 kg 3x10, lateral raise 5 kg 3x10, lat pulldown 3x10 dan seated row 3x10 (±20–25 kg), triceps kickback 12,5 kg 3x10, cable pushdown 25 kg 3x10.'
 
 const LEG = 'Penguatan kaki: calf raise 2x12, angkat ujung kaki (tibialis raise) 2x15, glute bridge 2x12.'
 
@@ -102,9 +122,9 @@ const OVERRIDES: Record<ISODate, Omit<PlannedSession, 'date'>> = {
   '2026-11-03': { kind: 'gymA', title: 'Gym A kaki + calf raise', minutes: 40, detail: 'Gerakan kaki beban ringan sampai sedang, ditambah calf raise. Berhenti kalau betis nyeri. Ditambah lari 2,21 km sebelum gym.' },
   '2026-11-04': { kind: 'rest', title: 'Libur', detail: 'Istirahat, bukan lari: Senin dan Selasa sudah lari berturut-turut.' },
   '2026-11-05': { kind: 'gymB', title: 'Gym B (shoulder press 25 kg)', minutes: 40, detail: 'Shoulder press turun ke 25 kg supaya semua set penuh. Gerakan lain seperti biasa.' },
-  '2026-11-06': { kind: 'walk', title: "Libur atau jalan santai 20–30'", minutes: 25, detail: 'Opsional.' },
-  '2026-11-07': { kind: 'long', title: "Lari pelan 35–40'", minutes: 38, detail: 'Lari utama minggu ini. HR maks 145, lebih pelan dari Rabu.' },
-  '2026-11-08': { kind: 'walk', title: 'Jalan santai atau istirahat', minutes: 25, detail: 'Opsional.' },
+  '2026-11-06': { kind: 'long', title: 'Lari treadmill 5,11 km (maju dari Sabtu)', km: 5.11, detail: 'Lari ke-3 minggu ini, jadi Sabtu dan Minggu tanpa lari.' },
+  '2026-11-07': { kind: 'walk', title: "Jalan santai 30' atau istirahat", minutes: 30, detail: 'Tidak lari. Calf raise boleh.' },
+  '2026-11-08': { kind: 'rest', title: 'Libur atau jalan santai', detail: 'Tidak lari. Minggu depan pola baru: lari Senin, Rabu, Jumat.' },
 }
 
 function buildSchedule(): PlannedSession[] {

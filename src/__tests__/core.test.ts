@@ -95,16 +95,22 @@ describe('jadwal', () => {
     expect(sessionOn('2026-12-05')?.kind).toBe('race')
     expect(dayName('2026-12-05')).toBe('Sabtu')
   })
-  it('pola mingguan: Sen Gym A, Rab lari, Kam Gym B, Sab long run', () => {
-    expect(sessionOn('2026-11-09')?.kind).toBe('gymA')
+  it('pola mingguan awal: Sen Gym A, Rab lari, Kam Gym B, Sab long run', () => {
     expect(sessionOn('2026-10-14')?.kind).toBe('easy')
     expect(sessionOn('2026-10-15')?.kind).toBe('gymB')
     expect(sessionOn('2026-10-17')?.title).toContain("45'")
-    expect(sessionOn('2026-11-28')?.title).toContain("65'")
   })
-  it('strides hanya minggu 7, 8, dan 10', () => {
+  it('revisi 6 Nov: minggu 7–9 lari Sen/Rab/Jum, Gym A Selasa, Gym B Kamis', () => {
+    const w7 = SCHEDULE.filter((x) => x.date >= '2026-11-09' && x.date <= '2026-11-15').map((x) => x.kind)
+    expect(w7).toEqual(['easy', 'gymA', 'easy', 'gymB', 'long', 'walk', 'rest'])
+    expect(sessionOn('2026-11-09')?.title).toBe('Lari easy 5 km')
+    expect(sessionOn('2026-11-27')?.title).toBe('Lari easy 6–7 km')
+    expect(sessionOn('2026-11-07')?.kind).toBe('walk')
+    expect(sessionOn('2026-11-08')?.kind).toBe('rest')
+  })
+  it('strides hanya minggu race', () => {
     const withStrides = new Set(SCHEDULE.filter((s) => s.strides).map((s) => WEEKS.find((w) => s.date >= w.start && s.date <= w.end)!.no))
-    expect([...withStrides].sort((a, b) => a - b)).toEqual([7, 8, 10])
+    expect([...withStrides]).toEqual([10])
   })
   it('mondayOf', () => {
     expect(mondayOf('2026-10-04')).toBe('2026-09-28')
@@ -198,11 +204,11 @@ describe('revisi jadwal 8 Okt dan aturan lari', () => {
   })
 
   it('peringatan lari berturut-turut, lebih dari 3, dan di hari gym/libur', () => {
-    const runs = ['2026-11-02', '2026-11-04', '2026-11-07'].map(run) // minggu 6
-    expect(runRuleWarnings('2026-11-05', runs).join(' ')).toMatch(/berturut-turut/)
-    expect(runRuleWarnings('2026-11-05', runs).join(' ')).toMatch(/Maks 3/)
-    expect(runRuleWarnings('2026-11-05', runs).join(' ')).toMatch(/bukan lari/)
-    expect(runRuleWarnings('2026-11-07', runs)).toEqual([])
+    const runs = ['2026-11-09', '2026-11-11', '2026-11-13'].map(run) // minggu 7
+    expect(runRuleWarnings('2026-11-12', runs).join(' ')).toMatch(/berturut-turut/)
+    expect(runRuleWarnings('2026-11-12', runs).join(' ')).toMatch(/Maks 3/)
+    expect(runRuleWarnings('2026-11-12', runs).join(' ')).toMatch(/bukan lari/)
+    expect(runRuleWarnings('2026-11-13', runs)).toEqual([])
   })
 
   it('revisi 19 Okt: minggu 4 tanpa lari, minggu 5 tanpa lari terjadwal (31 Okt–1 Nov istirahat)', () => {
@@ -212,6 +218,15 @@ describe('revisi jadwal 8 Okt dan aturan lari', () => {
     expect(w4.filter((x) => /penguatan kaki/.test(x.title)).length).toBe(3)
     const w5runs = SCHEDULE.filter((x) => x.date >= '2026-10-26' && x.date <= '2026-11-01' && x.kind === 'easy')
     expect(w5runs).toEqual([])
+  })
+
+  it('revisi 5 Nov: Gym B mulai minggu 7 tubuh atas dengan lat pulldown dan seated row', () => {
+    const g = sessionOn('2026-11-12')
+    expect(g?.kind).toBe('gymB')
+    expect(g?.title).toBe('Gym B tubuh atas')
+    expect(g?.detail).toMatch(/lat pulldown 3x10 dan seated row/)
+    expect(g?.detail).not.toMatch(/seated dumbbell/i)
+    expect(sessionOn('2026-11-19')?.detail).toMatch(/deload/)
   })
 
   it('Minggu 11 Okt boleh jadi lari ke-4', () => {
