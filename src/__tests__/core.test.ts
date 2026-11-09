@@ -108,6 +108,11 @@ describe('jadwal', () => {
     expect(sessionOn('2026-11-07')?.kind).toBe('walk')
     expect(sessionOn('2026-11-08')?.kind).toBe('rest')
   })
+  it('revisi 9 Nov: Kamis 12 Gym B fokus punggung, Jumat 13 lari 5–6 km', () => {
+    expect(sessionOn('2026-11-12')?.title).toBe('Gym B fokus punggung')
+    expect(sessionOn('2026-11-12')?.detail).toMatch(/^Utamakan lat pulldown/)
+    expect(sessionOn('2026-11-13')?.title).toBe('Lari easy 5–6 km')
+  })
   it('strides hanya minggu race', () => {
     const withStrides = new Set(SCHEDULE.filter((s) => s.strides).map((s) => WEEKS.find((w) => s.date >= w.start && s.date <= w.end)!.no))
     expect([...withStrides]).toEqual([10])
@@ -221,7 +226,7 @@ describe('revisi jadwal 8 Okt dan aturan lari', () => {
   })
 
   it('revisi 5 Nov: Gym B mulai minggu 7 tubuh atas dengan lat pulldown dan seated row', () => {
-    const g = sessionOn('2026-11-12')
+    const g = sessionOn('2026-11-26')
     expect(g?.kind).toBe('gymB')
     expect(g?.title).toBe('Gym B tubuh atas')
     expect(g?.detail).toMatch(/lat pulldown 3x10 dan seated row/)
