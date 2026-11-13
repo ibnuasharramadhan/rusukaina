@@ -3,6 +3,7 @@
 
 import { addDays, fromISO, type ISODate } from '../../lib/date'
 import type { PlannedSession, Profile } from '../../lib/types'
+import type { Exercise } from '../gym'
 import type { Plan, WeekSpec } from '../plan'
 
 export const IBNU_PROFILE: Profile = {
@@ -143,12 +144,35 @@ function buildSchedule(): PlannedSession[] {
   return out
 }
 
+// Program gym Ibnu sejak 9 Nov: A = kaki + dada, B = tubuh atas + punggung.
+// Nama gerakan sama dengan yang sudah dicatat supaya riwayat beban tersambung.
+export const IBNU_GYM: Record<'A' | 'B', Exercise[]> = {
+  A: [
+    { name: 'Leg press', prescription: '3x10–15', sets: 3, move: 'legPress', cue: 'Naik bertahap 35 → 50 kg' },
+    { name: 'Leg extension', prescription: '3x8–10', sets: 3, move: 'legExtension' },
+    { name: 'Lying leg curl', prescription: '3x10', sets: 3, move: 'legCurl' },
+    { name: 'Wall sit', prescription: '2–3x30"', sets: 3, move: 'wallSit', cue: 'Boleh sambil jinjit' },
+    { name: 'Calf raise', prescription: '3x15', sets: 3, move: 'calfRaise', cue: 'Dumbel 2,5–5 kg' },
+    { name: 'Chest press', prescription: '3x8–10', sets: 3, move: 'chestPress' },
+  ],
+  B: [
+    { name: 'Lat pulldown', prescription: '3x10', sets: 3, move: 'latPulldown', cue: '±20–25 kg' },
+    { name: 'Seated row', prescription: '3x10', sets: 3, move: 'seatedRow', cue: '±20–25 kg' },
+    { name: 'Shoulder press', prescription: '3x10', sets: 3, move: 'shoulderPress', cue: '25–30 kg' },
+    { name: 'Pectoral fly', prescription: '3x10', sets: 3, move: 'pecFly' },
+    { name: 'Lateral raise', prescription: '3x10', sets: 3, move: 'lateralRaise', cue: 'Dumbel 5 kg' },
+    { name: 'Triceps kickback', prescription: '3x10', sets: 3, move: 'kickback', cue: 'Dumbel 12,5 kg' },
+    { name: 'Cable pushdown', prescription: '3x10', sets: 3, move: 'pushdown', cue: '25 kg' },
+  ],
+}
+
 export const IBNU_PLAN: Plan = {
   id: 'ibnu-ui7k',
   start: '2026-10-01',
   end: '2026-12-05',
   weeks: WEEKS,
   schedule: buildSchedule(),
+  gym: IBNU_GYM,
   priorityNote: 'Kalau minggu kerja kacau: prioritas 1 = long run, 2 = 2x gym, 3 = sisanya. Minggu dengan cuma 3 sesi tetap minggu yang bagus.',
   raceTips: [
     'Km 1–2: lebih lambat dari yang terasa perlu, HR ≤150.',

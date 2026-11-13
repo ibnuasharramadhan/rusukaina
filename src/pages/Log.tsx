@@ -4,8 +4,9 @@ import { FoodSection } from '../components/FoodLog'
 import { ShareSheet } from '../components/ShareSheet'
 import { Icon } from '../components/icons'
 import { Card, Field, LevelBadge, num, PageHeader, Segmented } from '../components/ui'
-import { extraExercises, GYM, GYM_RULES, gymSummary } from '../data/gym'
-import { sessionOn } from '../data/plan'
+import { MoveToggle } from '../components/MoveDemo'
+import { extraExercises, GYM_RULES, gymSummary, moveFor } from '../data/gym'
+import { gymProgram, sessionOn } from '../data/plan'
 import { importActivityFiles } from '../lib/activityFile'
 import { dayReadiness, defaultShoeId } from '../lib/body'
 import { formatDate, today } from '../lib/date'
@@ -235,16 +236,17 @@ function GymSection({ params }: { params: URLSearchParams }) {
   const saved = params.get('saved') === '1'
   const ready = dayReadiness(profile, daily, date)
 
-  const initialSets = useMemo(() => GYM[workout].map((ex): GymSet => {
+  const program = useMemo(() => gymProgram(workout), [workout, profile])
+  const initialSets = useMemo(() => program.map((ex): GymSet => {
     const prev = editing?.workout === workout ? editing.exercises.find((e) => e.exercise === ex.name) : undefined
     if (prev) return { ...prev }
     const last = lastSetsFor(gym, workout, ex.name, date)[0]
     return { exercise: ex.name, weightKg: last?.weightKg, setsDone: 0, easy: false }
-  }), [workout, editing, gym, date])
+  }), [program, workout, editing, gym, date])
   const [sets, setSets] = useState<GymSet[]>(initialSets)
   useEffect(() => setSets(initialSets), [initialSets])
   // Latihan di luar program (mis. shoulder press) tetap tersimpan dan bisa diubah.
-  const initialExtras = useMemo(() => extraExercises(editing, workout), [editing, workout])
+  const initialExtras = useMemo(() => extraExercises(editing, workout, program), [editing, workout, program])
   const [extras, setExtras] = useState<GymSet[]>(initialExtras)
   useEffect(() => setExtras(initialExtras), [initialExtras])
   const [newEx, setNewEx] = useState('')
@@ -286,7 +288,7 @@ function GymSection({ params }: { params: URLSearchParams }) {
         {!profile.trackBp && !!profile.medName && <p className="hint">{NO_BP_NOTE}</p>}
         <RestTimer />
         <ol className="exercises">
-          {GYM[workout].map((ex, i) => {
+          {program.map((ex, i) => {
             const s = sets[i]
             if (!s) return null
             const hist = lastSetsFor(gym, workout, ex.name, date)
@@ -298,6 +300,7 @@ function GymSection({ params }: { params: URLSearchParams }) {
                   {ex.cue && <div className="muted small">{ex.cue}</div>}
                   {hist[0] && <div className="muted small">Terakhir: {hist[0].weightKg ? `${hist[0].weightKg} kg` : 'tanpa beban'}, {hist[0].setsDone} set</div>}
                   {progress && <div className="up">↑ 2 sesi terakhir ringan: naikkan 1–2,5 kg</div>}
+                  <MoveToggle id={moveFor(ex)} name={ex.name} />
                 </div>
                 <div className="ex-c">
                   <label className="kg"><input inputMode="decimal" aria-label="Beban kg" value={s.weightKg ?? ''} onChange={(e) => upd(i, { weightKg: num(e.target.value) })} placeholder="kg" /></label>
@@ -316,6 +319,7 @@ function GymSection({ params }: { params: URLSearchParams }) {
               <div className="ex-h">
                 <b>{s.exercise}</b> <span className="muted">tambahan</span>
                 <button type="button" className="link small danger" onClick={() => setExtras(extras.filter((_, j) => j !== i))}>Hapus</button>
+                <MoveToggle id={moveFor({ name: s.exercise })} name={s.exercise} />
               </div>
               <div className="ex-c">
                 <label className="kg"><input inputMode="decimal" aria-label={`Beban kg ${s.exercise}`} value={s.weightKg ?? ''} onChange={(e) => updX(i, { weightKg: num(e.target.value) })} placeholder="kg" /></label>

@@ -4,6 +4,7 @@
 
 import type { ISODate } from '../lib/date'
 import type { PlannedSession, PlanWeek, Profile } from '../lib/types'
+import { GYM, type Exercise } from './gym'
 import { generatePlan } from './generator'
 import { IBNU_PLAN, IBNU_PROFILE } from './presets/ibnu'
 
@@ -23,6 +24,8 @@ export interface Plan {
   schedule: PlannedSession[]
   priorityNote: string
   raceTips: string[]
+  /** Program gym sendiri; kalau kosong pakai program umum Gym A/B. */
+  gym?: Record<'A' | 'B', Exercise[]>
 }
 
 /** Profil lama (sebelum ada onboarding) adalah profil Ibnu. */
@@ -49,6 +52,10 @@ export function sessionOn(date: ISODate): PlannedSession | undefined {
 
 export function weekOf(date: ISODate): WeekSpec | undefined {
   return active.weeks.find((w) => date >= w.start && date <= w.end)
+}
+
+export function gymProgram(w: 'A' | 'B'): Exercise[] {
+  return active.gym?.[w] ?? GYM[w]
 }
 
 export const MAX_RUNS_PER_WEEK = 3
