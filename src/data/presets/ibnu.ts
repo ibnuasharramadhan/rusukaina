@@ -1,5 +1,5 @@
 // Preset: rencana Ibnu 1 Okt – 5 Des 2026 (UI Ultra 7K), disalin dari
-// latihan/rencana-okt-des-2026.md (revisi 1 Okt) plus revisi coach per tanggal (8 Okt, 19 Okt, 2–9 Nov).
+// latihan/rencana-okt-des-2026.md (revisi 1 Okt) plus revisi coach per tanggal (8 Okt, 19 Okt, 2–12 Nov).
 
 import { addDays, fromISO, type ISODate } from '../../lib/date'
 import type { PlannedSession, Profile } from '../../lib/types'
@@ -125,8 +125,11 @@ const OVERRIDES: Record<ISODate, Omit<PlannedSession, 'date'>> = {
   '2026-11-06': { kind: 'long', title: 'Lari treadmill 5,11 km (maju dari Sabtu)', km: 5.11, detail: 'Lari ke-3 minggu ini, jadi Sabtu dan Minggu tanpa lari.' },
   '2026-11-07': { kind: 'walk', title: "Jalan santai 30' atau istirahat", minutes: 30, detail: 'Tidak lari. Calf raise boleh.' },
   '2026-11-08': { kind: 'rest', title: 'Libur atau jalan santai', detail: 'Tidak lari. Minggu depan pola baru: lari Senin, Rabu, Jumat.' },
-  '2026-11-12': { kind: 'gymB', title: 'Gym B fokus punggung', minutes: 40, detail: `Utamakan lat pulldown 3x10 dan seated row 3x10 (±20–25 kg), lalu sisanya: ${GYM_B_UPPER}` },
-  '2026-11-13': { kind: 'long', title: 'Lari easy 5–6 km', km: 5.5, detail: 'Lari utama minggu ini. HR ≤145; jalan sebentar kalau HR naik.' },
+  '2026-11-11': { kind: 'rest', title: 'Libur', detail: 'Istirahat; lari dipindah ke Kamis.' },
+  '2026-11-12': { kind: 'easy', title: 'Lari treadmill 5,11 km (tukar dengan Gym B)', km: 5.11, detail: 'Gym B dipindah ke Jumat.' },
+  '2026-11-13': { kind: 'gymB', title: 'Gym B fokus punggung', minutes: 40, detail: `Utamakan lat pulldown 3x10 dan seated row 3x10 (±20–25 kg), lalu sisanya: ${GYM_B_UPPER}` },
+  '2026-11-14': { kind: 'long', title: 'Lari easy 6 km', km: 6, detail: 'Lari utama minggu ini. HR ≤145; jalan sebentar kalau HR naik.' },
+  '2026-11-15': { kind: 'walk', title: 'Jalan santai atau istirahat', minutes: 30, detail: 'Opsional. Tidak lari.' },
 }
 
 function buildSchedule(): PlannedSession[] {
