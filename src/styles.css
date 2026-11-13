@@ -316,9 +316,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 
 /* Gym */
 .exercises { list-style: none; padding: 0; margin: 8px 0; counter-reset: ex; }
-.exercises li { padding: 10px 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
-.exercises li.complete .ex-h b { color: var(--good-ink); }
-.exercises li.complete .ex-h b::before { content: '✓ '; }
+.exercises > li { padding: 10px 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+.exercises > li.complete .ex-h b { color: var(--good-ink); }
+.exercises > li.complete .ex-h b::before { content: '✓ '; }
 .ex-c { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .kg input { width: 76px; }
 .sets { display: flex; gap: 6px; }
@@ -622,3 +622,24 @@ details summary { cursor: pointer; font-weight: 600; }
 .food-qty { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 0 4px; }
 .food-qty .seg { flex: 1 1 180px; }
 .saved-msg { margin: 0; }
+
+/* Animasi cara gerak */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mv-toggle { margin-left: 8px; }
+.ex-h .mv-toggle { margin-left: 0; display: inline-block; margin-top: 2px; }
+.move-demo { display: grid; grid-template-columns: minmax(0, 150px) minmax(0, 1fr); gap: 10px; align-items: center; margin: 8px 0 4px; }
+.move-demo ol { margin: 0; padding-left: 18px; }
+@media (max-width: 380px) { .move-demo { grid-template-columns: 1fr; } }
+.mv { width: 100%; max-width: 150px; aspect-ratio: 6 / 5; background: var(--surface-2); border-radius: var(--radius-s); }
+.mv line, .mv polyline { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.mv-body line, .mv-body polyline { stroke: var(--ink); stroke-width: 3.2; }
+.mv-far line, .mv-far polyline { stroke: var(--muted); stroke-width: 3; opacity: 0.6; }
+.mv-head { fill: var(--ink); }
+.mv .mv-gear { fill: var(--gym); stroke: var(--gym); stroke-width: 2.4; }
+.mv .mv-cable { stroke: var(--muted); stroke-width: 0.8; }
+.mv .mv-prop { stroke: var(--axis); stroke-width: 4; }
+.mv-prop-fill { fill: var(--axis); }
+.mv .mv-floor { stroke: var(--line); stroke-width: 2; }
+.gym-guide li { margin-bottom: 4px; }
+.move-demo li { margin-bottom: 4px; line-height: 1.35; }
+.move-demo li:last-child { margin-bottom: 0; }

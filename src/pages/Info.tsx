@@ -3,9 +3,10 @@ import { FoodAiCard } from '../components/FoodAiCard'
 import { ShoesCard } from '../components/ShoesCard'
 import { StravaCard } from '../components/StravaCard'
 import { Card, Field, num, PageHeader } from '../components/ui'
-import { COOLDOWN, GYM, GYM_RULES, WARMUP } from '../data/gym'
+import { MoveToggle } from '../components/MoveDemo'
+import { COOLDOWN, GYM_RULES, moveFor, WARMUP } from '../data/gym'
 import { downloadBackup } from '../lib/backup'
-import { plan, sessionOn } from '../data/plan'
+import { gymProgram, plan, sessionOn } from '../data/plan'
 import { disableNotif, enableNotif, notifEnabled, notifSupport, showTestNotif, type NotifSupport } from '../lib/notify'
 import { formatDate, today } from '../lib/date'
 import { href } from '../lib/router'
@@ -128,7 +129,9 @@ function GymGuide() {
         {(['A', 'B'] as const).map((w) => (
           <div key={w}>
             <h3>Gym {w}</h3>
-            <ol className="small">{GYM[w].map((e) => <li key={e.name}>{e.name}, {e.prescription}</li>)}</ol>
+            <ol className="small gym-guide">{gymProgram(w).map((e) => (
+              <li key={e.name}>{e.name}, {e.prescription} <MoveToggle id={moveFor(e)} name={e.name} /></li>
+            ))}</ol>
           </div>
         ))}
       </div>
