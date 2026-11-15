@@ -10,7 +10,7 @@ import { gymProgram, plan, sessionOn } from '../data/plan'
 import { disableNotif, enableNotif, notifEnabled, notifSupport, showTestNotif, type NotifSupport } from '../lib/notify'
 import { formatDate, today } from '../lib/date'
 import { href } from '../lib/router'
-import { importAll, saveProfile, wipeAll } from '../lib/db'
+import { importAll, looksLikeExport, saveProfile, wipeAll } from '../lib/db'
 import { formatMedSchedule, parseMedSchedule } from '../lib/meds'
 import { useInstallPrompt } from '../lib/pwa'
 import { STOP_SIGNS } from '../lib/safety'
@@ -211,6 +211,8 @@ function DataTools() {
   const [confirmWipe, setConfirmWipe] = useState(false)
   const [pasted, setPasted] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
+  const pasteMsgRef = useRef<HTMLParagraphElement>(null)
+  const [pasteOpen, setPasteOpen] = useState(false)
   const summary = coachSummary({ runs, walks, daily, gym, foods, until: today(), days: 7, medTimes: profile.medSchedule?.map((x) => x.time) })
 
   async function doExport() {
@@ -229,6 +231,12 @@ function DataTools() {
       setMsg(`Gagal impor: ${e instanceof SyntaxError ? "teks bukan JSON yang utuh, pastikan tersalin semua" : (e as Error).message}`)
       return false
     }
+  }
+
+  async function importPasted(text: string) {
+    ;(document.activeElement as HTMLElement | null)?.blur()
+    if (await doImport(text)) setPasted('')
+    requestAnimationFrame(() => pasteMsgRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' }))
   }
 
   async function copySummary() {
@@ -256,12 +264,26 @@ function DataTools() {
         <button className="btn" onClick={() => fileRef.current?.click()}>Impor JSON</button>
         <input ref={fileRef} type="file" accept="application/json,.json" hidden onChange={async (e) => { const f = e.target.files?.[0]; if (f) await doImport(await f.text()) }} />
       </div>
-      {msg && <p role="status" className="small">{msg}</p>}
-      <details>
+      {msg && !pasteOpen && <p role="status" className="small">{msg}</p>}
+      <details onToggle={(e) => setPasteOpen(e.currentTarget.open)}>
         <summary className="small">Tempel teks JSON</summary>
         <p className="hint">Kalau file tidak bisa diunduh, salin isi JSON dari chat lalu tempel di sini.</p>
-        <textarea aria-label="Teks JSON untuk impor" rows={5} value={pasted} onChange={(e) => setPasted(e.target.value)} />
-        <button className="btn small" disabled={!pasted.trim()} onClick={async () => { if (await doImport(pasted)) setPasted('') }}>Impor teks</button>
+        <textarea
+          aria-label="Teks JSON untuk impor"
+          rows={5}
+          value={pasted}
+          onChange={(e) => setPasted(e.target.value)}
+          onPaste={(e) => {
+            // Teks hasil tempel yang utuh langsung diimpor, supaya tidak perlu mencari tombol di balik keyboard.
+            const text = e.clipboardData.getData('text')
+            if (!looksLikeExport(text)) return
+            e.preventDefault()
+            setPasted(text)
+            void importPasted(text)
+          }}
+        />
+        <button className="btn primary block" disabled={!pasted.trim()} onClick={() => importPasted(pasted)}>Impor teks</button>
+        {msg && <p ref={pasteMsgRef} role="status" className="small paste-msg">{msg}</p>}
       </details>
       <details>
         <summary className="small">Pratinjau ringkasan</summary>

@@ -157,6 +157,16 @@ export async function exportAll(): Promise<ExportFile> {
 
 export interface ImportResult { runs: number; daily: number; gym: number; marks: number; shoes: number; foods: number }
 
+/** Cek cepat: teks ini tampak seperti ekspor aplikasi yang utuh (dipakai untuk impor otomatis saat tempel). */
+export function looksLikeExport(text: string): boolean {
+  try {
+    validateExport(JSON.parse(text))
+    return true
+  } catch {
+    return false
+  }
+}
+
 export function validateExport(x: unknown): ExportFile {
   const f = x as Partial<ExportFile>
   if (!f || f.app !== 'pwa-latihan') throw new Error('Bukan file ekspor aplikasi ini.')

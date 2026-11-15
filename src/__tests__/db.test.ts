@@ -61,3 +61,13 @@ describe('IndexedDB', () => {
     expect(await getLastExportAt()).toBe(123)
   })
 })
+
+describe('looksLikeExport', () => {
+  it('menerima teks ekspor utuh dan menolak teks terpotong', async () => {
+    const { looksLikeExport } = await import('../lib/db')
+    const ok = JSON.stringify({ app: 'pwa-latihan', schemaVersion: 1, runs: [], daily: [], gym: [], marks: [] })
+    expect(looksLikeExport(ok)).toBe(true)
+    expect(looksLikeExport(ok.slice(0, -5))).toBe(false)
+    expect(looksLikeExport('{"app":"lain","schemaVersion":1}')).toBe(false)
+  })
+})
