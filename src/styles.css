@@ -207,6 +207,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .pill { display: inline-flex; align-items: center; gap: 4px; font-size: 0.82rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; background: var(--surface-2); }
 .pill.done { background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good-ink); }
 .hint { font-size: 0.82rem; color: var(--muted); }
+.btn.block { display: flex; width: 100%; margin-top: 8px; }
+.paste-msg { margin-top: 8px; font-weight: 600; }
 .race-result { --tone: var(--accent); background: linear-gradient(160deg, var(--accent-soft), var(--surface) 60%); }
 
 /* Angka besar */
